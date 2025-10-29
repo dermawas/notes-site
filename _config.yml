@@ -15,6 +15,9 @@ plugins:
 
 locale: en
 
+#logo assets
+logo: /assets/images/logo.svg
+
 # Markdown & permalinks
 markdown: kramdown
 permalink: "/:categories/:year/:month/:day/:title/"
