@@ -1,3 +1,11 @@
 /* Optional minimal extras specific to Minimal Mistakes */
 .mm-page__title, .page__title, .post-title { letter-spacing: .1px; }
 blockquote { font-style: italic; }
+
+.site-logo img {
+  height: 28px;
+  opacity: 0.85;
+}
+.site-logo img:hover {
+  opacity: 1;
+}
