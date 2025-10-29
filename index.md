@@ -8,6 +8,3 @@ title: "FlowformLab"
 Welcome — this is my working log: part notes, part diagrams, part reflection.  
 I document what I learn while building, fixing, and understanding systems — digital, mechanical, and human.  
 Not about perfection; about curiosity, iteration, and making sense of what we build.
-
-
-Latest notes appear below.
