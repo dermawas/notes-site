@@ -2,10 +2,15 @@
 .mm-page__title, .page__title, .post-title { letter-spacing: .1px; }
 blockquote { font-style: italic; }
 
-.site-logo img {
-  height: 28px;
-  opacity: 0.85;
+.masthead__inner-wrap {
+  align-items: center;
 }
+.site-logo img {
+  height: 26px;
+  margin-right: .35rem;
+  opacity: 0.9;
+}
+
 .site-logo img:hover {
   opacity: 1;
 }
