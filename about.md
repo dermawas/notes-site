@@ -1,7 +1,8 @@
 ---
-layout: page
+layout: single
 title: "About"
 permalink: /about/
+author_profile: false
 ---
 
 **FlowformLab** is a personal journal on how things work — and how to make them work better (or at least, better *for me*).
