@@ -1,6 +1,11 @@
 main:
   - title: "Notes"
     url: /
+    children:
+      - title: "Patterns"
+        url: /category/patterns/
+      - title: "Risks"
+        url: /category/risk
   - title: "About"
     url: /about/
   - title: "Contact"
