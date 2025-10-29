@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="44" viewBox="0 0 140 44" role="img" aria-labelledby="t d">
+  <title id="t">FFL — FlowformLab dark-mode logo</title>
+  <desc id="d">Compact FFL wordmark with bright orange spark for dark backgrounds</desc>
+
+  <!-- Sunburst spark -->
+  <g transform="translate(70,22)" opacity="0.35" stroke="#fb923c" stroke-width="2" stroke-linecap="round" fill="none">
+    <circle r="6" fill="#fb923c" stroke="none"></circle>
+    <g>
+      <line x1="0" y1="-14" x2="0" y2="-22"></line>
+      <line x1="0" y1="14" x2="0" y2="22"></line>
+      <line x1="14" y1="0" x2="22" y2="0"></line>
+      <line x1="-14" y1="0" x2="-22" y2="0"></line>
+      <line x1="10" y1="-10" x2="16" y2="-16"></line>
+      <line x1="-10" y1="10" x2="-16" y2="16"></line>
+      <line x1="-10" y1="-10" x2="-16" y2="-16"></line>
+      <line x1="10" y1="10" x2="16" y2="16"></line>
+      <line x1="5" y1="-14" x2="8" y2="-22"></line>
+      <line x1="-5" y1="14" x2="-8" y2="22"></line>
+      <line x1="-14" y1="5" x2="-22" y2="8"></line>
+      <line x1="14" y1="-5" x2="22" y2="-8"></line>
+    </g>
+  </g>
+
+  <!-- FFL text (light gray for dark mode) -->
+  <text x="70" y="29" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle" letter-spacing="1" fill="#e5e7eb">
+    FFL
+  </text>
+</svg>

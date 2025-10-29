@@ -16,7 +16,7 @@ plugins:
 locale: en
 
 #logo assets
-logo: /assets/images/logo.svg
+logo: /assets/images/logo-ffl-spark.svg
 
 # Markdown & permalinks
 markdown: kramdown
