@@ -1,9 +1,15 @@
 ---
-layout: single
-title: About
+layout: page
+title: "About"
 permalink: /about/
 ---
 
-With years of experience in technology delivery and business transformation, these notes draw from practical exposure to large-scale delivery, product transformation, and the governance of complex systems.
+**FlowformLab** is a personal journal on how things work — and how to make them work better (or at least, better *for me*).
 
-The writings here are not prescriptions, but reflections — notes from practice meant to capture patterns, risks, and mitigations that others might find useful.
+It’s my working log — part notes, part diagrams, part reflection — a space to trace ideas as they flow, form, and evolve.
+
+I write about what I learn while building, fixing, and understanding systems: digital, mechanical, and human.
+
+It’s not about perfection — it’s about curiosity, iteration, and making sense of what we build.
+
+Sometimes it’s technical, sometimes reflective, always hands-on.
