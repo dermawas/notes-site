@@ -14,3 +14,11 @@ I write about what I learn while building, fixing, and understanding systems: di
 It’s not about perfection — it’s about curiosity, iteration, and making sense of what we build.
 
 Sometimes it’s technical, sometimes reflective, always hands-on.
+
+---
+
+### 📬 Contact
+
+If you’d like to get in touch:
+
+- **Email:** [spark@flowformlab.com](mailto:spark@flowformlab.com)
