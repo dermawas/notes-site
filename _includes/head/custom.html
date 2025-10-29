@@ -1,3 +1,22 @@
 <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
 <link rel="icon" href="/assets/images/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 <link rel="alternate icon" href="/assets/images/favicon.svg">
+
+<!-- 🌐 Meta tags for FlowformLab -->
+<meta name="description" content="{{ site.description | escape }}">
+
+<meta property="og:site_name" content="{{ site.title | escape }}">
+<meta property="og:title" content="{{ page.title | default: site.title | escape }}">
+<meta property="og:description" content="{{ site.description | escape }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ page.url | absolute_url }}">
+{%- if page.image or site.og_image -%}
+  <meta property="og:image" content="{{ page.image | default: site.og_image | absolute_url }}">
+{%- endif -%}
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page.title | default: site.title | escape }}">
+<meta name="twitter:description" content="{{ site.description | escape }}">
+{%- if page.image or site.og_image -%}
+  <meta name="twitter:image" content="{{ page.image | default: site.og_image | absolute_url }}">
+{%- endif -%}
