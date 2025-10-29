@@ -15,11 +15,6 @@ plugins:
 
 locale: en
 
-# Simple nav
-header_pages:
-  - about.md
-  - contact.md
-
 # Markdown & permalinks
 markdown: kramdown
 permalink: "/:categories/:year/:month/:day/:title/"
