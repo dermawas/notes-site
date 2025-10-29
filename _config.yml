@@ -1,41 +1,50 @@
 title: FlowformLab
 description: "Structured reflections on digital transformation and delivery practices — mapping risks, mitigations, and lessons learned."
 email: spark@flowformlab.com
-url: https://dermawas.github.io
-baseurl: ""
 
+# If you’re using the custom domain (recommended since you set DNS):
+url: https://flowformlab.com
+baseurl: ""          # keep empty for apex domain
 
+# Theme & plugins
 remote_theme: mmistakes/minimal-mistakes
 plugins:
-- jekyll-feed
-- jekyll-seo-tag
-- jekyll-include-cache
-
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-include-cache
 
 locale: en
+
+# Simple nav
 header_pages:
-- about.md
-- contact.md
+  - about.md
+  - contact.md
 
-
+# Markdown & permalinks
 markdown: kramdown
 permalink: "/:categories/:year/:month/:day/:title/"
 
-
+# Defaults (note the indentation)
 defaults:
-- scope:
-path: ""
-type: posts
-values:
-layout: single
-author_profile: false
-read_time: false
-comments: false
-share: false
-- scope:
-path: ""
-type: pages
-values:
-layout: single
-author_profile: false
-- Gemfile.lock
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: false
+      read_time: false
+      comments: false
+      share: false
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: single
+      author_profile: false
+
+# Exclude files from the site build
+exclude:
+  - README.md
+  - .github/
+  - Gemfile
+  - Gemfile.lock
