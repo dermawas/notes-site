@@ -3,7 +3,12 @@ title: "Selling Land Safely — Lessons from a 22-Hectare Experience"
 date: 2025-10-29
 categories: [Insights, Real Estate, Indonesia]
 description: "Reflections and practical advice after more than a decade trying to sell a 22-hectare land in West Java."
-image: /assets/images/safe-land-sale-flow.png
+header:
+  image: /assets/images/safe-land-sale-flow.png
+  caption: "Safe Land Sale Flow"
+  overlay_color: "#000"      # optional
+  overlay_filter: 0.2        # optional (darken for contrast)
+classes: wide                 # optional: widen content
 ---
 
 ### Project: Selling 22 Hectares of Land in West Java
