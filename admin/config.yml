@@ -1,47 +1,53 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FlowformLab CMS</title>
-    <meta name="robots" content="noindex" />
+backend:
+  name: github
+  repo: dermawas/notes-site
+  branch: main
+  base_url: https://ffl-oauth.vercel.app   # your Vercel OAuth proxy
+  auth_endpoint: /api/auth
 
-    <!-- OAuth shim: persists token if Decap misses postMessage -->
-    <script>
-      (function () {
-        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app"; // <-- your Vercel OAuth app
+site_url: https://flowformlab.com
+logo_url: /assets/images/logo-ffl-spark.svg
+publish_mode: editorial_workflow
 
-        function handle(e) {
-          // Only accept messages from our OAuth origin
-          if (e.origin !== OAUTH_ORIGIN) return;
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
 
-          if (typeof e.data === "string" &&
-              e.data.indexOf("authorization:github:success:") === 0) {
-            var token = e.data.replace("authorization:github:success:", "").trim();
+collections:
+  - name: "posts"
+    label: "Posts"
+    folder: "_posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    preview_path: "{{year}}/{{month}}/{{day}}/{{slug}}/"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Categories", name: "categories", widget: "list", default: ["notes"] }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+      - { label: "Description", name: "description", widget: "string", required: false }
+      - label: "Header Image"
+        name: "header"
+        widget: "object"
+        collapsed: true
+        fields:
+          - { label: "Overlay Image", name: "overlay_image", widget: "image", required: false }
+          - { label: "Caption", name: "caption", widget: "string", required: false }
+      - { label: "Body", name: "body", widget: "markdown" }
 
-            // What Decap expects in storage
-            var payload = JSON.stringify({ token: token, provider: "github" });
-
-            try {
-              localStorage.setItem("decap-cms-user", payload);
-              localStorage.setItem("netlify-cms-user", payload); // backward compat
-            } catch (err) {
-              console.error("Failed to persist token:", err);
-            }
-
-            // Reload so Decap initializes with the stored token
-            location.reload();
-          }
-        }
-
-        window.addEventListener("message", handle, false);
-      })();
-    </script>
-  </head>
-
-  <body>
-    <!-- Decap CMS -->
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-  </body>
-</html>
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "About"
+        name: "about"
+        file: "about.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Permalink", name: "permalink", widget: "string", default: "/about/" }
+          - { label: "Body", name: "body", widget: "markdown" }
+      - label: "Contact"
+        name: "contact"
+        file: "contact.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Permalink", name: "permalink", widget: "string", default: "/contact/" }
+          - { label: "Body", name: "body", widget: "markdown" }
