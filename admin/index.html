@@ -8,35 +8,36 @@
     <meta name="robots" content="noindex">
 
     <!-- Shim: persist OAuth token if Decap ignores the postMessage -->
-    <script>
-      (function () {
-        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
-        function handle(e) {
-          // Only accept from our OAuth proxy
-          if (e.origin !== OAUTH_ORIGIN) return;
+   <script>
+  (function () {
+    var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
+    function handle(e) {
+      // Only accept from our OAuth proxy
+      if (e.origin !== OAUTH_ORIGIN) return;
 
-          if (typeof e.data === "string" &&
-              e.data.indexOf("authorization:github:success:") === 0) {
+      if (typeof e.data === "string" &&
+          e.data.indexOf("authorization:github:success:") === 0) {
 
-            var token = e.data.replace("authorization:github:success:", "").trim();
+        var token = e.data.replace("authorization:github:success:", "").trim();
 
-            // Decap 3.x uses 'decap-cms-user'; older code used 'netlify-cms-user'
-            var payload = JSON.stringify({ token: token });
+        // What Decap expects: a user object with at least a token.
+        // Include provider to be extra explicit.
+        var payload = JSON.stringify({ token: token, provider: "github" });
 
-            try {
-              localStorage.setItem("decap-cms-user", payload);
-              localStorage.setItem("netlify-cms-user", payload);
-            } catch (err) {
-              console.error("Failed to persist token:", err);
-            }
-
-            // Reload so Decap picks up the stored user
-            location.reload();
-          }
+        try {
+          localStorage.setItem("decap-cms-user", payload);
+          localStorage.setItem("netlify-cms-user", payload);
+        } catch (err) {
+          console.error("Failed to persist token:", err);
         }
-        window.addEventListener("message", handle, false);
-      })();
-    </script>
+
+        // Hard reload so Decap re-initializes with the stored token
+        location.reload();
+      }
+    }
+    window.addEventListener("message", handle, false);
+  })();
+</script>
   </head>
 
   <body>
