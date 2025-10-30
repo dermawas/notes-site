@@ -7,36 +7,36 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- Shim: persist OAuth token so Decap picks it up -->
+    <!-- OAuth postMessage shim: persist token for all key variants -->
     <script>
       (function () {
-        // MUST match your Vercel OAuth proxy origin exactly
         var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
 
-        function handle(e) {
+        function onMessage(e) {
           if (e.origin !== OAUTH_ORIGIN) return;
+          if (typeof e.data !== "string") return;
 
-          if (typeof e.data === "string" &&
-              e.data.indexOf("authorization:github:success:") === 0) {
+          var prefix = "authorization:github:success:";
+          if (!e.data.startsWith(prefix)) return;
 
-            var token = e.data.replace("authorization:github:success:", "").trim();
+          var token = e.data.slice(prefix.length).trim();
+          var payload = JSON.stringify({ token: token, provider: "github" });
 
-            // IMPORTANT: include provider so Decap accepts the session
-            var payload = JSON.stringify({ token: token, provider: "github" });
-
-            try {
-              localStorage.setItem("decap-cms-user", payload);
-              localStorage.setItem("netlify-cms-user", payload); // legacy key
-            } catch (err) {
-              console.error("Failed to persist token:", err);
-            }
-
-            // Reload so Decap reads the stored session
-            location.reload();
+          try {
+            // Underscore keys
+            localStorage.setItem("decap-cms-user", payload);
+            localStorage.setItem("netlify-cms-user", payload);
+            // Dot keys (some Decap builds expect these)
+            localStorage.setItem("decap-cms.user", payload);
+            localStorage.setItem("netlify-cms.user", payload);
+          } catch (err) {
+            console.error("Failed to persist OAuth token", err);
           }
+
+          location.reload();
         }
 
-        window.addEventListener("message", handle, false);
+        window.addEventListener("message", onMessage, false);
       })();
     </script>
   </head>
