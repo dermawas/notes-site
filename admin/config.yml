@@ -2,8 +2,8 @@ backend:
   name: github
   repo: dermawas/notes-site
   branch: main
-  base_url: https://ffl-oauth.vercel.app        # <-- your Vercel domain
-  auth_endpoint: /api/auth     # <-- use /api/auth on Vercel
+  base_url: https://ffl-oauth.vercel.app   # your Vercel OAuth proxy
+  auth_endpoint: /api/auth
 
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
@@ -17,32 +17,14 @@ collections:
     label: "Posts"
     folder: "_posts"
     create: true
-    format: "frontmatter"
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     preview_path: "{{year}}/{{month}}/{{day}}/{{slug}}/"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Layout", name: "layout", widget: "hidden", default: "single" }
       - { label: "Categories", name: "categories", widget: "list", default: ["notes"] }
       - { label: "Tags", name: "tags", widget: "list", required: false }
-      - { label: "Description (SEO)", name: "excerpt", widget: "text", required: false }
-
-      # Optional language flag (future expansion)
-      - label: "Language"
-        name: "lang"
-        widget: "select"
-        options: [{label: "English", value: "en"}, {label: "Bahasa Indonesia", value: "id"}]
-        required: false
-
-      # TL;DR image pattern you like
-      - label: "TL;DR Diagram"
-        name: "tldr_diagram"
-        widget: "image"
-        required: false
-      - { label: "TL;DR Caption", name: "tldr_caption", widget: "string", required: false }
-
-      # Optional header image
+      - { label: "Description", name: "description", widget: "string", required: false }
       - label: "Header Image"
         name: "header"
         widget: "object"
@@ -50,8 +32,6 @@ collections:
         fields:
           - { label: "Overlay Image", name: "overlay_image", widget: "image", required: false }
           - { label: "Caption", name: "caption", widget: "string", required: false }
-
-      # Post content
       - { label: "Body", name: "body", widget: "markdown" }
 
   - name: "pages"
@@ -62,12 +42,12 @@ collections:
         file: "about.md"
         fields:
           - { label: "Title", name: "title", widget: "string" }
-          - { label: "Layout", name: "layout", widget: "hidden", default: "single" }
+          - { label: "Permalink", name: "permalink", widget: "string", default: "/about/" }
           - { label: "Body", name: "body", widget: "markdown" }
       - label: "Contact"
         name: "contact"
         file: "contact.md"
         fields:
           - { label: "Title", name: "title", widget: "string" }
-          - { label: "Layout", name: "layout", widget: "hidden", default: "single" }
+          - { label: "Permalink", name: "permalink", widget: "string", default: "/contact/" }
           - { label: "Body", name: "body", widget: "markdown" }
