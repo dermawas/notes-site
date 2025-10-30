@@ -3,7 +3,7 @@ backend:
   repo: dermawas/notes-site
   branch: main
   base_url: https://ffl-oauth.vercel.app        # <-- your Vercel domain
-  auth_endpoint: /api/auth     # <-- use /api/auth on Vercel
+  auth_endpoint: /api     # <-- use /api/auth on Vercel
 
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
