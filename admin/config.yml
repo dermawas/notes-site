@@ -3,7 +3,7 @@ backend:
   repo: dermawas/notes-site
   branch: main
   base_url: https://netlify-cms-oauth-provider-node-nine.vercel.app
-  auth_endpoint: /auth     # ← change from /api/auth to /auth
+  auth_endpoint: /api/auth     # <-- use /api/auth on Vercel
 
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
