@@ -7,40 +7,38 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- OAuth postMessage shim: persist token for all key variants -->
+    <!-- OAuth shim: persist token delivered from the OAuth proxy -->
     <script>
       (function () {
+        // IMPORTANT: If you ever change your OAuth proxy domain, update this.
         var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
 
-        function onMessage(e) {
+        function onMsg(e) {
+          // Accept only messages from our OAuth proxy
           if (e.origin !== OAUTH_ORIGIN) return;
           if (typeof e.data !== "string") return;
 
-          var prefix = "authorization:github:success:";
-          if (!e.data.startsWith(prefix)) return;
-
-          var token = e.data.slice(prefix.length).trim();
-          var payload = JSON.stringify({ token: token, provider: "github" });
-
-          try {
-            // Underscore keys
-            localStorage.setItem("decap-cms-user", payload);
-            localStorage.setItem("netlify-cms-user", payload);
-            // Dot keys (some Decap builds expect these)
-            localStorage.setItem("decap-cms.user", payload);
-            localStorage.setItem("netlify-cms.user", payload);
-          } catch (err) {
-            console.error("Failed to persist OAuth token", err);
+          if (e.data.indexOf("authorization:github:success:") === 0) {
+            var token = e.data.replace("authorization:github:success:", "").trim();
+            // Decap 3.x uses 'decap-cms-user'; mirror to 'netlify-cms-user' for compatibility
+            var payload = JSON.stringify({ token: token, provider: "github" });
+            try {
+              localStorage.setItem("decap-cms-user", payload);
+              localStorage.setItem("netlify-cms-user", payload);
+            } catch (err) {
+              console.error("Persist token failed:", err);
+            }
+            // Reload so Decap reads the stored user and bypasses login
+            location.reload();
           }
-
-          location.reload();
         }
 
-        window.addEventListener("message", onMessage, false);
+        window.addEventListener("message", onMsg, false);
       })();
     </script>
   </head>
   <body>
+    <!-- Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
