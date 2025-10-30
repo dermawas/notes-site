@@ -1,47 +1,47 @@
 <!doctype html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FlowformLab CMS</title>
-    <meta name="robots" content="noindex">
+    <meta name="robots" content="noindex" />
 
-    <!-- Shim: persist OAuth token if Decap ignores the postMessage -->
-   <script>
-  (function () {
-    var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
-    function handle(e) {
-      // Only accept from our OAuth proxy
-      if (e.origin !== OAUTH_ORIGIN) return;
+    <!-- OAuth shim: persists token if Decap misses postMessage -->
+    <script>
+      (function () {
+        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app"; // <-- your Vercel OAuth app
 
-      if (typeof e.data === "string" &&
-          e.data.indexOf("authorization:github:success:") === 0) {
+        function handle(e) {
+          // Only accept messages from our OAuth origin
+          if (e.origin !== OAUTH_ORIGIN) return;
 
-        var token = e.data.replace("authorization:github:success:", "").trim();
+          if (typeof e.data === "string" &&
+              e.data.indexOf("authorization:github:success:") === 0) {
+            var token = e.data.replace("authorization:github:success:", "").trim();
 
-        // What Decap expects: a user object with at least a token.
-        // Include provider to be extra explicit.
-        var payload = JSON.stringify({ token: token, provider: "github" });
+            // What Decap expects in storage
+            var payload = JSON.stringify({ token: token, provider: "github" });
 
-        try {
-          localStorage.setItem("decap-cms-user", payload);
-          localStorage.setItem("netlify-cms-user", payload);
-        } catch (err) {
-          console.error("Failed to persist token:", err);
+            try {
+              localStorage.setItem("decap-cms-user", payload);
+              localStorage.setItem("netlify-cms-user", payload); // backward compat
+            } catch (err) {
+              console.error("Failed to persist token:", err);
+            }
+
+            // Reload so Decap initializes with the stored token
+            location.reload();
+          }
         }
 
-        // Hard reload so Decap re-initializes with the stored token
-        location.reload();
-      }
-    }
-    window.addEventListener("message", handle, false);
-  })();
-</script>
+        window.addEventListener("message", handle, false);
+      })();
+    </script>
   </head>
 
   <body>
-    <!-- Decap CMS script -->
+    <!-- Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
