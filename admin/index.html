@@ -6,89 +6,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
-    <!-- IMPORTANT: we do NOT set window.CMS_MANUAL_INIT here.
-         We let Decap auto-init AFTER we persist the token. -->
 
-<script>
-(function () {
-  var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
-  var STORAGE_KEY = "decap-cms-user";
-  var CONFIG_PATH = "/admin/config.yml";
+    <script>
+      /* ------------------------------------------------------------
+         FlowformLab Admin bootstrap (Decap CMS, GitHub OAuth)
+         - Manual init so we can guard with username allowlist
+         - Single-flight guard to prevent double CMS.init()
+         ------------------------------------------------------------ */
 
-  function log(){ try{ console.log("[admin]", ...arguments); }catch(e){} }
+      // Allowlist: only these GitHub usernames can use the CMS
+      const ALLOWED_USERS = ["dermawas"]; // add more as needed
 
-  function getSaved() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); }
-    catch (_) { return null; }
-  }
+      // Manual init so we can enforce allowlist first
+      window.CMS_MANUAL_INIT = true;
 
-  async function saveUserToken(token) {
-    if (!token) return;
+      // Single-flight guard (avoid double mounts)
+      window.__CMS_BOOT = { initialized: false, initializing: false };
 
-    // Fetch GitHub identity (handy for UI / debugging, not strictly required)
-    let ghUser = null;
-    try {
-      const res = await fetch("https://api.github.com/user", {
-        headers: { Authorization: "token " + token }
-      });
-      ghUser = await res.json();
-      log("GitHub user:", ghUser?.login);
-    } catch (e) {
-      console.error("[admin] GH user fetch failed", e);
-    }
+      function scheduleInitOnce() {
+        if (window.__CMS_BOOT.initialized || window.__CMS_BOOT.initializing) return;
+        window.__CMS_BOOT.initializing = true;
 
-    // IMPORTANT: Decap expects `provider: "github"`
-    const value = {
-      token: token,
-      provider: "github",
-      login: ghUser?.login || null,
-      user: ghUser || null
-    };
+        // Wait until CMS bundle is actually ready, then init exactly once
+        (function tryInit() {
+          if (window.CMS && typeof CMS.init === "function") {
+            if (!window.__CMS_BOOT.initialized) {
+              window.__CMS_BOOT.initialized = true;
+              try {
+                CMS.init({ config: "/admin/config.yml" });
+              } finally {
+                window.__CMS_BOOT.initializing = false;
+              }
+            }
+          } else {
+            // Retry shortly until the bundle is available
+            setTimeout(tryInit, 50);
+          }
+        })();
+      }
 
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-      localStorage.setItem("netlify-cms-user", JSON.stringify(value)); // compatibility
-      log("saved Decap user", value);
-    } catch (e) {
-      console.error("[admin] failed to persist token", e);
-    }
-  }
+      async function fetchGithubUser(token) {
+        const r = await fetch("https://api.github.com/user", {
+          headers: { Authorization: "token " + token }
+        });
+        if (!r.ok) throw new Error("GitHub /user failed: " + r.status);
+        return r.json();
+      }
 
-  function initCMSWhenReady() {
-    // Manual init is enabled; call CMS.init when the library is ready.
-    if (window.CMS && typeof window.CMS.init === "function") {
-      log("calling CMS.init({ config: '" + CONFIG_PATH + "' })");
-      window.CMS.init({ config: CONFIG_PATH });
-    } else {
-      // Retry shortly until decap-cms script is loaded
-      setTimeout(initCMSWhenReady, 50);
-    }
-  }
+      async function finishLoginAndInit(token) {
+        try {
+          const ghUser = await fetchGithubUser(token);
+          console.log("[admin] GitHub user:", ghUser.login);
 
-  // Handle OAuth popup message
-  window.addEventListener("message", async function (e) {
-    if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
+          // Enforce allowlist
+          if (!ALLOWED_USERS.includes(ghUser.login)) {
+            console.warn("[admin] user not allowed:", ghUser.login);
+            try {
+              localStorage.removeItem("decap-cms-user");
+              localStorage.removeItem("netlify-cms-user");
+            } catch (e) {}
+            const msg = document.createElement("p");
+            msg.style.cssText =
+              "max-width:640px;margin:2rem auto;color:#b00020;text-align:center;font:600 16px/1.5 system-ui,sans-serif";
+            msg.textContent =
+              "Your GitHub account (" + ghUser.login + ") is not allowed to access this CMS.";
+            document.body.appendChild(msg);
+            return;
+          }
 
-    if (e.data.startsWith("authorization:github:success:")) {
-      const token = e.data.replace("authorization:github:success:", "").trim();
-      await saveUserToken(token);
-      initCMSWhenReady();
-    }
-  });
+          // Save session in Decap's expected shape
+          const userPayload = { token, provider: "github", login: ghUser.login, user: ghUser };
+          try {
+            localStorage.setItem("decap-cms-user", JSON.stringify(userPayload));
+            localStorage.setItem("netlify-cms-user", JSON.stringify(userPayload)); // legacy key
+          } catch (e) {}
 
-  // If a user is already saved (e.g., after refresh), initialize CMS directly
-  window.addEventListener("load", function () {
-    const u = getSaved();
-    if (u && u.provider === "github" && u.token) {
-      log("existing decap-cms-user found; initializing CMS");
-      initCMSWhenReady();
-    }
-  });
-})();
-</script>
+          console.log("[admin] saved Decap user", userPayload);
+
+          // Init CMS exactly once
+          scheduleInitOnce();
+        } catch (err) {
+          console.error("[admin] login finalize failed:", err);
+          try {
+            localStorage.removeItem("decap-cms-user");
+            localStorage.removeItem("netlify-cms-user");
+          } catch (e) {}
+        }
+      }
+
+      // Bootstrap: if a user is already stored, finish directly; otherwise wait for OAuth message
+      (function bootstrap() {
+        try {
+          const existing = localStorage.getItem("decap-cms-user");
+          if (existing) {
+            const saved = JSON.parse(existing);
+            const token = saved?.token || null;
+            if (token) {
+              console.log("[admin] found existing session; finishing...");
+              finishLoginAndInit(token);
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // Wait for the OAuth popup to send us the token
+        window.addEventListener("message", function (e) {
+          if (e.origin !== "https://ffl-oauth.vercel.app") return;
+          if (typeof e.data === "string" && e.data.indexOf("authorization:github:success:") === 0) {
+            const token = e.data.replace("authorization:github:success:", "").trim();
+            console.log("[admin] oauth success; token received");
+            finishLoginAndInit(token);
+          }
+        });
+      })();
+    </script>
   </head>
   <body>
-    <!-- Load Decap AFTER the shim so it can see the token on first paint -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
