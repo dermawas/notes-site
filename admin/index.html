@@ -7,51 +7,44 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- 1) Prevent auto-boot; we will start CMS after our auth shim runs -->
+    <!-- Prevent auto boot; we will start CMS manually with our config -->
     <script>window.CMS_MANUAL_INIT = true;</script>
 
     <script>
       (function () {
         var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
 
-        function log() { try { console.log.apply(console, ["[admin]"].concat([].slice.call(arguments))); } catch(e) {} }
-        function warn(){ try { console.warn.apply(console, ["[admin]"].concat([].slice.call(arguments))); } catch(e) {} }
-        function err() { try { console.error.apply(console, ["[admin]"].concat([].slice.call(arguments))); } catch(e) {} }
+        function log(){ try{ console.log.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
+        function err(){ try{ console.error.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
 
         function saveUser(user) {
+          if (!user || !user.token) return;
+          var normalized = { token: user.token, provider: "github" };
           try {
-            if (!user || !user.token) return;
-            var normalized = { token: user.token, provider: "github" };
             localStorage.setItem("decap-cms-user", JSON.stringify(normalized));
             localStorage.setItem("netlify-cms-user", JSON.stringify(normalized)); // legacy mirror
             log("saved user with provider=github");
-          } catch (e) {
-            err("failed to write cms-user", e);
-          }
+          } catch (e) { err("failed to write cms-user", e); }
         }
 
-        // 2) Normalize any existing user (adds provider, mirrors legacy key)
+        // Normalize any existing user
         (function normalizeExisting() {
           try {
             var raw = localStorage.getItem("decap-cms-user");
-            if (!raw) { log("no existing user in storage"); return; }
-            var obj = {};
-            try { obj = JSON.parse(raw); } catch (_) {}
+            if (!raw) return;
+            var obj = {}; try { obj = JSON.parse(raw); } catch(_) {}
             if (obj && obj.token) {
-              if (!obj.provider) { obj.provider = "github"; }
+              if (!obj.provider) obj.provider = "github";
               saveUser(obj);
               log("normalized existing decap-cms-user");
             } else {
-              log("existing value had no token, clearing");
               localStorage.removeItem("decap-cms-user");
               localStorage.removeItem("netlify-cms-user");
             }
-          } catch (e) {
-            warn("normalizeExisting error", e);
-          }
+          } catch(e){ /* noop */ }
         })();
 
-        // 3) Handle OAuth popup messages
+        // OAuth popup messages
         window.addEventListener("message", function (e) {
           if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
 
@@ -60,7 +53,7 @@
             log("oauth success; token received");
             saveUser({ token: token });
 
-            // Force a cache-busted reload so Decap sees the new user
+            // Reload (cache-busted) so CMS picks it up
             var url = location.pathname + "?no_bundle_cache=1" + location.hash;
             location.replace(url);
           } else if (e.data.indexOf("authorization:github:error:") === 0) {
@@ -68,30 +61,22 @@
           }
         }, false);
 
-        // 4) Start CMS after the script is fully loaded
+        // Start CMS with explicit config path
         function startCMS() {
           if (window.CMS && typeof CMS.init === "function") {
             try {
-              log("calling CMS.init()");
-              CMS.init();
-            } catch (e) {
-              err("CMS.init threw", e);
-            }
+              log("calling CMS.init({ config: '/admin/config.yml' })");
+              CMS.init({ config: "/admin/config.yml" });
+            } catch (e) { err("CMS.init threw", e); }
           } else {
             setTimeout(startCMS, 60);
           }
         }
-
-        // Make sure we attempt init only *after* the CMS bundle finishes loading.
-        window.addEventListener("load", function () {
-          log("window load → try CMS.init");
-          startCMS();
-        });
+        window.addEventListener("load", function(){ log("window load → try CMS.init"); startCMS(); });
       })();
     </script>
   </head>
   <body>
-    <!-- 5) Decap CMS bundle -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
