@@ -6,77 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
-
-    <!-- Prevent auto boot; we will start CMS manually with our config -->
-    <script>window.CMS_MANUAL_INIT = true;</script>
+    <!-- IMPORTANT: we do NOT set window.CMS_MANUAL_INIT here.
+         We let Decap auto-init AFTER we persist the token. -->
 
     <script>
       (function () {
         var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
+        var RELOAD_FLAG = "ffl_oauth_reload_once";
+        var KEY = "decap-cms-user";
 
         function log(){ try{ console.log.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
         function err(){ try{ console.error.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
 
-        function saveUser(user) {
-          if (!user || !user.token) return;
-          var normalized = { token: user.token, provider: "github" };
+        function getUser() {
+          try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
+          catch (_) { return null; }
+        }
+
+        function saveUser(token) {
+          if (!token) return;
+          var normalized = { token: token, provider: "github" };
           try {
-            localStorage.setItem("decap-cms-user", JSON.stringify(normalized));
-            localStorage.setItem("netlify-cms-user", JSON.stringify(normalized)); // legacy mirror
+            localStorage.setItem(KEY, JSON.stringify(normalized));
+            // mirror for older code paths
+            localStorage.setItem("netlify-cms-user", JSON.stringify(normalized));
             log("saved user with provider=github");
           } catch (e) { err("failed to write cms-user", e); }
         }
 
-        // Normalize any existing user
-        (function normalizeExisting() {
-          try {
-            var raw = localStorage.getItem("decap-cms-user");
-            if (!raw) return;
-            var obj = {}; try { obj = JSON.parse(raw); } catch(_) {}
-            if (obj && obj.token) {
-              if (!obj.provider) obj.provider = "github";
-              saveUser(obj);
-              log("normalized existing decap-cms-user");
-            } else {
-              localStorage.removeItem("decap-cms-user");
-              localStorage.removeItem("netlify-cms-user");
-            }
-          } catch(e){ /* noop */ }
-        })();
+        // If we reloaded after saving the token, clear the flag now.
+        if (sessionStorage.getItem(RELOAD_FLAG)) {
+          sessionStorage.removeItem(RELOAD_FLAG);
+          log("post-reload: continue to Decap auto-init");
+        }
 
-        // OAuth popup messages
+        // Accept token from OAuth popup and reload once.
         window.addEventListener("message", function (e) {
           if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
 
           if (e.data.indexOf("authorization:github:success:") === 0) {
             var token = e.data.replace("authorization:github:success:", "").trim();
-            log("oauth success; token received");
-            saveUser({ token: token });
 
-            // Reload (cache-busted) so CMS picks it up
+            // If the token didn't change, do nothing (prevents loops).
+            var u = getUser();
+            if (u && u.token === token) {
+              log("oauth success (duplicate), token unchanged — skipping reload");
+              return;
+            }
+
+            log("oauth success; token received");
+            saveUser(token);
+
+            // Reload once with cache-buster so Decap sees the token, then auto-inits.
+            sessionStorage.setItem(RELOAD_FLAG, "1");
             var url = location.pathname + "?no_bundle_cache=1" + location.hash;
             location.replace(url);
-          } else if (e.data.indexOf("authorization:github:error:") === 0) {
+          }
+          else if (e.data.indexOf("authorization:github:error:") === 0) {
             err("oauth error", e.data);
           }
         }, false);
-
-        // Start CMS with explicit config path
-        function startCMS() {
-          if (window.CMS && typeof CMS.init === "function") {
-            try {
-              log("calling CMS.init({ config: '/admin/config.yml' })");
-              CMS.init({ config: "/admin/config.yml" });
-            } catch (e) { err("CMS.init threw", e); }
-          } else {
-            setTimeout(startCMS, 60);
-          }
-        }
-        window.addEventListener("load", function(){ log("window load → try CMS.init"); startCMS(); });
       })();
     </script>
   </head>
   <body>
+    <!-- Load Decap AFTER the shim so it can see the token on first paint -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
