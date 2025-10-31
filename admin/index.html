@@ -7,13 +7,13 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- We will initialize CMS ourselves to avoid race conditions -->
+    <!-- We’ll initialize CMS ourselves -->
     <script>
       window.CMS_MANUAL_INIT = true;
     </script>
 
     <style>
-      /* keep a stable mount to avoid React unmount/mount races */
+      /* keep a stable mount so React doesn’t fight the DOM */
       #nc-root { min-height: 60vh; }
     </style>
 
@@ -23,54 +23,43 @@
         let started = false;
 
         function saveToken(token) {
-          const payload = JSON.stringify({ token: token });
+          const payload = JSON.stringify({ token });
           try {
             localStorage.setItem("decap-cms-user", payload);
-            localStorage.setItem("netlify-cms-user", payload); // legacy key
-            console.log("[admin] saved token to localStorage");
+            localStorage.setItem("netlify-cms-user", payload); // legacy
+            console.log("[admin] token saved");
           } catch (e) {
             console.warn("[admin] failed to save token:", e);
-          }
-        }
-
-        function hasUser() {
-          try {
-            return !!localStorage.getItem("decap-cms-user");
-          } catch (_) {
-            return false;
           }
         }
 
         function startCMS() {
           if (started) return;
           if (!window.CMS) {
+            // decap-cms script not ready yet; try again on next frame
             requestAnimationFrame(startCMS);
             return;
           }
           started = true;
-          console.log("[admin] starting CMS.init()");
+          console.log("[admin] calling CMS.init()");
           window.CMS.init({ config: "/admin/config.yml" });
         }
 
         // Receive token from OAuth popup
-        window.addEventListener(
-          "message",
-          (e) => {
-            if (e.origin !== OAUTH_ORIGIN) return;
-            const s = String(e.data || "");
-            if (!s.startsWith("authorization:github:success:")) return;
+        window.addEventListener("message", (e) => {
+          if (e.origin !== OAUTH_ORIGIN) return;
+          const s = String(e.data || "");
+          if (!s.startsWith("authorization:github:success:")) return;
 
-            const token = s.replace("authorization:github:success:", "").trim();
-            console.log("[admin] oauth success; token received");
-            saveToken(token);
+          const token = s.replace("authorization:github:success:", "").trim();
+          console.log("[admin] oauth success; token received");
+          saveToken(token);
 
-            if (!location.hash || location.hash === "#/login") {
-              location.hash = "#/";
-            }
-            startCMS();
-          },
-          false
-        );
+          // Normalize to collections route so Decap boots in a known state
+          location.hash = "#/";
+          // Reload once to let Decap pick the stored token cleanly
+          location.reload();
+        });
 
         // Optional emergency clear: /admin/?clear=1
         if (location.search.includes("clear=1")) {
@@ -79,21 +68,16 @@
           console.log("[admin] cleared stored user");
         }
 
+        // Always start CMS so the login UI renders when there is no user yet
         window.addEventListener("load", () => {
-          if (hasUser()) {
-            console.log("[admin] user exists; booting CMS");
-            startCMS();
-          } else {
-            console.log("[admin] no user found; waiting for OAuth popup");
-          }
+          startCMS();
         });
       })();
     </script>
   </head>
-
   <body>
     <div id="nc-root"></div>
-    <!-- Load Decap *after* we set CMS_MANUAL_INIT -->
+    <!-- Load Decap after we set CMS_MANUAL_INIT -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
