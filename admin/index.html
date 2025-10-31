@@ -22,12 +22,17 @@
         const OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
         let started = false;
 
+        /** ✅ SAVE TOKEN IN CORRECT SHAPE */
         function saveToken(token) {
-          const payload = JSON.stringify({ token });
+          const payload = JSON.stringify({
+            token,
+            provider: "github"
+          });
+
           try {
             localStorage.setItem("decap-cms-user", payload);
-            localStorage.setItem("netlify-cms-user", payload); // legacy
-            console.log("[admin] token saved");
+            localStorage.setItem("netlify-cms-user", payload); // legacy key
+            console.log("[admin] token saved", payload);
           } catch (e) {
             console.warn("[admin] failed to save token:", e);
           }
@@ -36,7 +41,6 @@
         function startCMS() {
           if (started) return;
           if (!window.CMS) {
-            // decap-cms script not ready yet; try again on next frame
             requestAnimationFrame(startCMS);
             return;
           }
@@ -55,9 +59,7 @@
           console.log("[admin] oauth success; token received");
           saveToken(token);
 
-          // Normalize to collections route so Decap boots in a known state
           location.hash = "#/";
-          // Reload once to let Decap pick the stored token cleanly
           location.reload();
         });
 
@@ -68,7 +70,6 @@
           console.log("[admin] cleared stored user");
         }
 
-        // Always start CMS so the login UI renders when there is no user yet
         window.addEventListener("load", () => {
           startCMS();
         });
@@ -77,7 +78,6 @@
   </head>
   <body>
     <div id="nc-root"></div>
-    <!-- Load Decap after we set CMS_MANUAL_INIT -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
