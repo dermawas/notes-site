@@ -7,39 +7,41 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
+    <style>
+      /* optional: keep empty root visible while loading */
+      #nc-root { min-height: 60vh; }
+    </style>
+
     <script>
-      /* ------------------------------------------------------------
-         FlowformLab Admin bootstrap (Decap CMS, GitHub OAuth)
-         - Manual init so we can guard with username allowlist
-         - Single-flight guard to prevent double CMS.init()
-         ------------------------------------------------------------ */
+      // ---------- Config ----------
+      const ALLOWED_USERS = ["dermawas"]; // add more usernames if needed
+      const OAUTH_ORIGIN  = "https://ffl-oauth.vercel.app";
 
-      // Allowlist: only these GitHub usernames can use the CMS
-      const ALLOWED_USERS = ["dermawas"]; // add more as needed
-
-      // Manual init so we can enforce allowlist first
+      // We’ll init manually after we validate the user
       window.CMS_MANUAL_INIT = true;
 
-      // Single-flight guard (avoid double mounts)
+      // Single-flight guard for init
       window.__CMS_BOOT = { initialized: false, initializing: false };
 
+      function log(...a){ try{console.log.apply(console,["[admin]",...a])}catch(_){ } }
+      function warn(...a){ try{console.warn.apply(console,["[admin]",...a])}catch(_){ } }
+
+      // Init exactly once; Decap will mount into #nc-root if it exists
       function scheduleInitOnce() {
         if (window.__CMS_BOOT.initialized || window.__CMS_BOOT.initializing) return;
         window.__CMS_BOOT.initializing = true;
 
-        // Wait until CMS bundle is actually ready, then init exactly once
         (function tryInit() {
           if (window.CMS && typeof CMS.init === "function") {
-            if (!window.__CMS_BOOT.initialized) {
-              window.__CMS_BOOT.initialized = true;
-              try {
-                CMS.init({ config: "/admin/config.yml" });
-              } finally {
-                window.__CMS_BOOT.initializing = false;
-              }
+            window.__CMS_BOOT.initialized = true;
+            window.__CMS_BOOT.initializing = false;
+            log("CMS.init({ config: '/admin/config.yml' })");
+            try {
+              CMS.init({ config: "/admin/config.yml" });
+            } catch (e) {
+              warn("CMS.init threw:", e);
             }
           } else {
-            // Retry shortly until the bundle is available
             setTimeout(tryInit, 50);
           }
         })();
@@ -49,79 +51,84 @@
         const r = await fetch("https://api.github.com/user", {
           headers: { Authorization: "token " + token }
         });
-        if (!r.ok) throw new Error("GitHub /user failed: " + r.status);
+        if (!r.ok) throw new Error("GitHub /user failed " + r.status);
         return r.json();
       }
 
       async function finishLoginAndInit(token) {
         try {
-          const ghUser = await fetchGithubUser(token);
-          console.log("[admin] GitHub user:", ghUser.login);
+          const gh = await fetchGithubUser(token);
+          log("GitHub user:", gh.login);
 
-          // Enforce allowlist
-          if (!ALLOWED_USERS.includes(ghUser.login)) {
-            console.warn("[admin] user not allowed:", ghUser.login);
-            try {
-              localStorage.removeItem("decap-cms-user");
-              localStorage.removeItem("netlify-cms-user");
-            } catch (e) {}
+          if (!ALLOWED_USERS.includes(gh.login)) {
+            warn("user not allowed:", gh.login);
+            localStorage.removeItem("decap-cms-user");
+            localStorage.removeItem("netlify-cms-user");
             const msg = document.createElement("p");
             msg.style.cssText =
               "max-width:640px;margin:2rem auto;color:#b00020;text-align:center;font:600 16px/1.5 system-ui,sans-serif";
             msg.textContent =
-              "Your GitHub account (" + ghUser.login + ") is not allowed to access this CMS.";
+              "Your GitHub account (" + gh.login + ") is not allowed to access this CMS.";
             document.body.appendChild(msg);
             return;
           }
 
-          // Save session in Decap's expected shape
-          const userPayload = { token, provider: "github", login: ghUser.login, user: ghUser };
-          try {
-            localStorage.setItem("decap-cms-user", JSON.stringify(userPayload));
-            localStorage.setItem("netlify-cms-user", JSON.stringify(userPayload)); // legacy key
-          } catch (e) {}
+          const userPayload = { token, provider: "github", login: gh.login, user: gh };
+          localStorage.setItem("decap-cms-user", JSON.stringify(userPayload));
+          localStorage.setItem("netlify-cms-user", JSON.stringify(userPayload)); // legacy
+          log("saved Decap user", userPayload);
 
-          console.log("[admin] saved Decap user", userPayload);
-
-          // Init CMS exactly once
+          // very sticky init (now, on load, and delayed retries)
           scheduleInitOnce();
+          window.addEventListener("load", scheduleInitOnce, { once: true });
+          setTimeout(scheduleInitOnce, 150);
+          setTimeout(scheduleInitOnce, 500);
         } catch (err) {
-          console.error("[admin] login finalize failed:", err);
-          try {
-            localStorage.removeItem("decap-cms-user");
-            localStorage.removeItem("netlify-cms-user");
-          } catch (e) {}
+          warn("login finalize failed:", err);
+          localStorage.removeItem("decap-cms-user");
+          localStorage.removeItem("netlify-cms-user");
         }
       }
 
-      // Bootstrap: if a user is already stored, finish directly; otherwise wait for OAuth message
       (function bootstrap() {
+        // Resume existing session
         try {
-          const existing = localStorage.getItem("decap-cms-user");
-          if (existing) {
-            const saved = JSON.parse(existing);
-            const token = saved?.token || null;
+          const raw = localStorage.getItem("decap-cms-user");
+          if (raw) {
+            const saved = JSON.parse(raw);
+            const token = saved && saved.token;
             if (token) {
-              console.log("[admin] found existing session; finishing...");
+              log("found existing session; finishing…");
               finishLoginAndInit(token);
-              return;
             }
           }
-        } catch (e) {}
+        } catch (_) {}
 
-        // Wait for the OAuth popup to send us the token
-        window.addEventListener("message", function (e) {
-          if (e.origin !== "https://ffl-oauth.vercel.app") return;
+        // OAuth popup message
+        window.addEventListener("message", (e) => {
+          if (e.origin !== OAUTH_ORIGIN) return;
           if (typeof e.data === "string" && e.data.indexOf("authorization:github:success:") === 0) {
             const token = e.data.replace("authorization:github:success:", "").trim();
-            console.log("[admin] oauth success; token received");
+            log("oauth success; token received");
             finishLoginAndInit(token);
           }
+        });
+
+        // If CMS loads first and user is already present, init then
+        window.addEventListener("load", () => {
+          try {
+            const saved = JSON.parse(localStorage.getItem("decap-cms-user") || "null");
+            if (saved && saved.token) scheduleInitOnce();
+          } catch (_){}
         });
       })();
     </script>
   </head>
   <body>
+    <!-- >>> This explicit root prevents the removeChild race <<< -->
+    <div id="nc-root"></div>
+
+    <!-- Load Decap once -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
