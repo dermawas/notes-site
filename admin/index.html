@@ -7,38 +7,68 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- OAuth shim: persist token delivered from the OAuth proxy -->
+    <!-- OAuth shim: catch token from OAuth proxy BEFORE Decap loads -->
     <script>
       (function () {
-        // IMPORTANT: If you ever change your OAuth proxy domain, update this.
-        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
+        // Be flexible about subdomains (vercel preview, main, etc.)
+        var OAUTH_HOST = "ffl-oauth.vercel.app";
+
+        function isFromProxy(origin) {
+          try {
+            var u = new URL(origin);
+            return u.host === OAUTH_HOST;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function persistToken(raw) {
+          var payload = JSON.stringify({ token: raw }); // the exact shape that worked earlier
+          try {
+            localStorage.setItem("decap-cms-user", payload);
+            localStorage.setItem("netlify-cms-user", payload); // legacy key, harmless
+            console.log("[admin] token persisted to localStorage.");
+          } catch (err) {
+            console.error("[admin] failed to persist token:", err);
+          }
+        }
 
         function onMsg(e) {
-          // Accept only messages from our OAuth proxy
-          if (e.origin !== OAUTH_ORIGIN) return;
+          // TEMP: log everything so we can see it
+          console.log("[admin] postMessage received:", e.origin, e.data);
+
+          if (!isFromProxy(e.origin)) return;
           if (typeof e.data !== "string") return;
 
           if (e.data.indexOf("authorization:github:success:") === 0) {
             var token = e.data.replace("authorization:github:success:", "").trim();
-            // Decap 3.x uses 'decap-cms-user'; mirror to 'netlify-cms-user' for compatibility
-            var payload = JSON.stringify({ token: token, provider: "github" });
-            try {
-              localStorage.setItem("decap-cms-user", payload);
-              localStorage.setItem("netlify-cms-user", payload);
-            } catch (err) {
-              console.error("Persist token failed:", err);
-            }
-            // Reload so Decap reads the stored user and bypasses login
-            location.reload();
+            persistToken(token);
+
+            // Give localStorage a tick to flush, then reload so Decap picks it up
+            setTimeout(function () {
+              location.replace(location.href.split("#")[0]); // avoid hash issues
+            }, 50);
+          }
+
+          if (e.data.indexOf("authorization:github:error:") === 0) {
+            var msg = e.data.replace("authorization:github:error:", "").trim();
+            console.error("[admin] OAuth error from proxy:", msg);
+            alert("OAuth error: " + msg);
           }
         }
 
         window.addEventListener("message", onMsg, false);
+
+        // Optional: if a token already exists, we can log it for sanity
+        try {
+          var existing = localStorage.getItem("decap-cms-user");
+          if (existing) console.log("[admin] existing decap-cms-user:", existing);
+        } catch {}
       })();
     </script>
   </head>
   <body>
-    <!-- Decap CMS -->
+    <!-- Decap CMS (load AFTER shim so the token is ready) -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
