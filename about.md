@@ -2,7 +2,12 @@
 layout: single
 title: "About"
 permalink: /about/
-author_profile: false
+description: "FlowformLab — a personal lab for systems, tinkering, reflection, and learning through doing."
+header:
+  overlay_image:
+  caption:
+  overlay_filter:
+toc: false
 ---
 
 **FlowformLab** is a personal journal on how things work — and how to make them work better (or at least, better *for me*).
