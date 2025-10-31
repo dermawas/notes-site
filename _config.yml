@@ -6,6 +6,10 @@ email: spark@flowformlab.com
 url: https://flowformlab.com
 baseurl: ""          # keep empty for apex domain
 
+# Time & publishing config
+timezone: Asia/Jakarta
+future: true   # allow posts with future timestamps to appear
+
 # Theme & plugins
 remote_theme: mmistakes/minimal-mistakes
 plugins:
