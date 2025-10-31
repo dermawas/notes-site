@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Taming Decap CMS With AI — A Non-Coder’s Journey"
-date: 2025-10-31 16:00 +0700
+date: 2025-10-31
 categories: ["notes"]
 tags: ["flowformlab", "decap", "oauth", "ai-working-style", "vibe-coding"]
 description: "How I built a working Decap CMS with GitHub OAuth despite not being a coder — and what building with AI really feels like."
