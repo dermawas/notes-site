@@ -7,17 +7,16 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
+    <!-- Tell Decap not to auto-start; we'll start it after we fix/record auth. -->
+    <script>window.CMS_MANUAL_INIT = true;</script>
+
     <script>
       (function () {
-        // Your Vercel OAuth origin (must match the domain that serves /api/auth & /api/callback)
         var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
 
         function saveUser(user) {
           try {
-            var normalized = {
-              token: user && user.token,
-              provider: "github"
-            };
+            var normalized = { token: user && user.token, provider: "github" };
             if (!normalized.token) return;
             localStorage.setItem("decap-cms-user", JSON.stringify(normalized));
             localStorage.setItem("netlify-cms-user", JSON.stringify(normalized));
@@ -26,7 +25,7 @@
           }
         }
 
-        // 1) Upgrade any existing user object (add provider, mirror legacy key)
+        // Upgrade any existing value (add provider, mirror legacy key)
         (function upgradeExisting() {
           try {
             var raw = localStorage.getItem("decap-cms-user");
@@ -34,39 +33,42 @@
             var obj = {};
             try { obj = JSON.parse(raw); } catch (_) {}
             if (obj && obj.token) {
-              if (!obj.provider) {
-                obj.provider = "github";
-                console.log("[admin] added provider to existing decap-cms-user");
-              }
+              if (!obj.provider) obj.provider = "github";
               saveUser(obj);
+              console.log("[admin] normalized existing decap-cms-user");
             }
           } catch (e) {
             console.warn("[admin] upgradeExisting error:", e);
           }
         })();
 
-        // 2) Listen for OAuth popup messages and persist token
+        // Listen for OAuth popup success/error
         window.addEventListener("message", function (e) {
-          if (e.origin !== OAUTH_ORIGIN) return;
-          if (typeof e.data !== "string") return;
+          if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
 
           if (e.data.indexOf("authorization:github:success:") === 0) {
             var token = e.data.replace("authorization:github:success:", "").trim();
             saveUser({ token: token });
-            // Force reload so Decap immediately uses the stored user
-            if (!/no_bundle_cache=1/.test(location.search)) {
-              // small suffix to defeat bundle caching on first load after auth
-              var url = location.pathname + "?no_bundle_cache=1" + location.hash;
-              location.replace(url);
-            } else {
-              location.reload();
-            }
-          }
 
+            // Bust cached bundle once after auth so CMS sees the new user
+            var url = location.pathname + "?no_bundle_cache=1" + location.hash;
+            location.replace(url);
+          }
           if (e.data.indexOf("authorization:github:error:") === 0) {
             console.error("[admin] OAuth error:", e.data);
           }
         }, false);
+
+        // Start CMS after our shim has run and the CMS script is present
+        function startCMSWhenReady() {
+          if (window.CMS && CMS.init) {
+            try { CMS.init(); } catch (e) { console.error("[admin] CMS.init error:", e); }
+          } else {
+            setTimeout(startCMSWhenReady, 50);
+          }
+        }
+        // Kick off the poller; the CMS script tag is below.
+        startCMSWhenReady();
       })();
     </script>
   </head>
