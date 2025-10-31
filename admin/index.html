@@ -12,58 +12,80 @@
 <script>
 (function () {
   var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
-  var RELOAD_FLAG = "ffl_oauth_reload_once";
-  var KEY = "decap-cms-user";
+  var STORAGE_KEY = "decap-cms-user";
+  var CONFIG_PATH = "/admin/config.yml";
 
-  function log(){try{console.log("[admin]",...arguments);}catch(e){}}
-  function getUser(){try{return JSON.parse(localStorage.getItem(KEY)||"null");}catch(_){return null;}}
+  function log(){ try{ console.log("[admin]", ...arguments); }catch(e){} }
+
+  function getSaved() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); }
+    catch (_) { return null; }
+  }
 
   async function saveUserToken(token) {
     if (!token) return;
 
-    // Also fetch GitHub username — required for Decap login
+    // Fetch GitHub identity (handy for UI / debugging, not strictly required)
     let ghUser = null;
     try {
       const res = await fetch("https://api.github.com/user", {
-        headers: { Authorization: "token " + token },
+        headers: { Authorization: "token " + token }
       });
       ghUser = await res.json();
-      log("GitHub user:", ghUser.login);
+      log("GitHub user:", ghUser?.login);
     } catch (e) {
       console.error("[admin] GH user fetch failed", e);
     }
 
+    // IMPORTANT: Decap expects `provider: "github"`
     const value = {
       token: token,
-      backendName: "github",
-      login: ghUser?.login || null,  // important for Decap
+      provider: "github",
+      login: ghUser?.login || null,
       user: ghUser || null
     };
 
-    localStorage.setItem(KEY, JSON.stringify(value));
-    localStorage.setItem("netlify-cms-user", JSON.stringify(value));
-    log("saved Decap user", value);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+      localStorage.setItem("netlify-cms-user", JSON.stringify(value)); // compatibility
+      log("saved Decap user", value);
+    } catch (e) {
+      console.error("[admin] failed to persist token", e);
+    }
   }
 
-  // accept OAuth postMessage
+  function initCMSWhenReady() {
+    // Manual init is enabled; call CMS.init when the library is ready.
+    if (window.CMS && typeof window.CMS.init === "function") {
+      log("calling CMS.init({ config: '" + CONFIG_PATH + "' })");
+      window.CMS.init({ config: CONFIG_PATH });
+    } else {
+      // Retry shortly until decap-cms script is loaded
+      setTimeout(initCMSWhenReady, 50);
+    }
+  }
+
+  // Handle OAuth popup message
   window.addEventListener("message", async function (e) {
     if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
 
     if (e.data.startsWith("authorization:github:success:")) {
       const token = e.data.replace("authorization:github:success:", "").trim();
       await saveUserToken(token);
-      sessionStorage.setItem(RELOAD_FLAG, "1");
-      location.replace("/admin/?no_bundle_cache=1#/");
+      initCMSWhenReady();
     }
   });
 
-  if (sessionStorage.getItem(RELOAD_FLAG)) {
-    sessionStorage.removeItem(RELOAD_FLAG);
-    log("post-reload: auto-init Decap");
-  }
+  // If a user is already saved (e.g., after refresh), initialize CMS directly
+  window.addEventListener("load", function () {
+    const u = getSaved();
+    if (u && u.provider === "github" && u.token) {
+      log("existing decap-cms-user found; initializing CMS");
+      initCMSWhenReady();
+    }
+  });
 })();
 </script>
-
   </head>
   <body>
     <!-- Load Decap AFTER the shim so it can see the token on first paint -->
