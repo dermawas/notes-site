@@ -7,68 +7,71 @@
     <title>FlowformLab CMS</title>
     <meta name="robots" content="noindex" />
 
-    <!-- OAuth shim: catch token from OAuth proxy BEFORE Decap loads -->
     <script>
       (function () {
-        // Be flexible about subdomains (vercel preview, main, etc.)
-        var OAUTH_HOST = "ffl-oauth.vercel.app";
+        // Your Vercel OAuth origin (must match the domain that serves /api/auth & /api/callback)
+        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
 
-        function isFromProxy(origin) {
+        function saveUser(user) {
           try {
-            var u = new URL(origin);
-            return u.host === OAUTH_HOST;
+            var normalized = {
+              token: user && user.token,
+              provider: "github"
+            };
+            if (!normalized.token) return;
+            localStorage.setItem("decap-cms-user", JSON.stringify(normalized));
+            localStorage.setItem("netlify-cms-user", JSON.stringify(normalized));
           } catch (e) {
-            return false;
+            console.error("[admin] failed to write cms-user:", e);
           }
         }
 
-        function persistToken(raw) {
-          var payload = JSON.stringify({ token: raw }); // the exact shape that worked earlier
+        // 1) Upgrade any existing user object (add provider, mirror legacy key)
+        (function upgradeExisting() {
           try {
-            localStorage.setItem("decap-cms-user", payload);
-            localStorage.setItem("netlify-cms-user", payload); // legacy key, harmless
-            console.log("[admin] token persisted to localStorage.");
-          } catch (err) {
-            console.error("[admin] failed to persist token:", err);
+            var raw = localStorage.getItem("decap-cms-user");
+            if (!raw) return;
+            var obj = {};
+            try { obj = JSON.parse(raw); } catch (_) {}
+            if (obj && obj.token) {
+              if (!obj.provider) {
+                obj.provider = "github";
+                console.log("[admin] added provider to existing decap-cms-user");
+              }
+              saveUser(obj);
+            }
+          } catch (e) {
+            console.warn("[admin] upgradeExisting error:", e);
           }
-        }
+        })();
 
-        function onMsg(e) {
-          // TEMP: log everything so we can see it
-          console.log("[admin] postMessage received:", e.origin, e.data);
-
-          if (!isFromProxy(e.origin)) return;
+        // 2) Listen for OAuth popup messages and persist token
+        window.addEventListener("message", function (e) {
+          if (e.origin !== OAUTH_ORIGIN) return;
           if (typeof e.data !== "string") return;
 
           if (e.data.indexOf("authorization:github:success:") === 0) {
             var token = e.data.replace("authorization:github:success:", "").trim();
-            persistToken(token);
-
-            // Give localStorage a tick to flush, then reload so Decap picks it up
-            setTimeout(function () {
-              location.replace(location.href.split("#")[0]); // avoid hash issues
-            }, 50);
+            saveUser({ token: token });
+            // Force reload so Decap immediately uses the stored user
+            if (!/no_bundle_cache=1/.test(location.search)) {
+              // small suffix to defeat bundle caching on first load after auth
+              var url = location.pathname + "?no_bundle_cache=1" + location.hash;
+              location.replace(url);
+            } else {
+              location.reload();
+            }
           }
 
           if (e.data.indexOf("authorization:github:error:") === 0) {
-            var msg = e.data.replace("authorization:github:error:", "").trim();
-            console.error("[admin] OAuth error from proxy:", msg);
-            alert("OAuth error: " + msg);
+            console.error("[admin] OAuth error:", e.data);
           }
-        }
-
-        window.addEventListener("message", onMsg, false);
-
-        // Optional: if a token already exists, we can log it for sanity
-        try {
-          var existing = localStorage.getItem("decap-cms-user");
-          if (existing) console.log("[admin] existing decap-cms-user:", existing);
-        } catch {}
+        }, false);
       })();
     </script>
   </head>
   <body>
-    <!-- Decap CMS (load AFTER shim so the token is ready) -->
+    <!-- Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>
