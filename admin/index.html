@@ -9,65 +9,61 @@
     <!-- IMPORTANT: we do NOT set window.CMS_MANUAL_INIT here.
          We let Decap auto-init AFTER we persist the token. -->
 
-    <script>
-      (function () {
-        var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
-        var RELOAD_FLAG = "ffl_oauth_reload_once";
-        var KEY = "decap-cms-user";
+<script>
+(function () {
+  var OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
+  var RELOAD_FLAG = "ffl_oauth_reload_once";
+  var KEY = "decap-cms-user";
 
-        function log(){ try{ console.log.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
-        function err(){ try{ console.error.apply(console, ["[admin]"].concat([].slice.call(arguments))); }catch(e){} }
+  function log(){try{console.log("[admin]",...arguments);}catch(e){}}
+  function getUser(){try{return JSON.parse(localStorage.getItem(KEY)||"null");}catch(_){return null;}}
 
-        function getUser() {
-          try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
-          catch (_) { return null; }
-        }
+  async function saveUserToken(token) {
+    if (!token) return;
 
-        function saveUser(token) {
-          if (!token) return;
-          var normalized = { token: token, provider: "github" };
-          try {
-            localStorage.setItem(KEY, JSON.stringify(normalized));
-            // mirror for older code paths
-            localStorage.setItem("netlify-cms-user", JSON.stringify(normalized));
-            log("saved user with provider=github");
-          } catch (e) { err("failed to write cms-user", e); }
-        }
+    // Also fetch GitHub username — required for Decap login
+    let ghUser = null;
+    try {
+      const res = await fetch("https://api.github.com/user", {
+        headers: { Authorization: "token " + token },
+      });
+      ghUser = await res.json();
+      log("GitHub user:", ghUser.login);
+    } catch (e) {
+      console.error("[admin] GH user fetch failed", e);
+    }
 
-        // If we reloaded after saving the token, clear the flag now.
-        if (sessionStorage.getItem(RELOAD_FLAG)) {
-          sessionStorage.removeItem(RELOAD_FLAG);
-          log("post-reload: continue to Decap auto-init");
-        }
+    const value = {
+      token: token,
+      backendName: "github",
+      login: ghUser?.login || null,  // important for Decap
+      user: ghUser || null
+    };
 
-        // Accept token from OAuth popup and reload once.
-        window.addEventListener("message", function (e) {
-          if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
+    localStorage.setItem(KEY, JSON.stringify(value));
+    localStorage.setItem("netlify-cms-user", JSON.stringify(value));
+    log("saved Decap user", value);
+  }
 
-          if (e.data.indexOf("authorization:github:success:") === 0) {
-            var token = e.data.replace("authorization:github:success:", "").trim();
+  // accept OAuth postMessage
+  window.addEventListener("message", async function (e) {
+    if (e.origin !== OAUTH_ORIGIN || typeof e.data !== "string") return;
 
-            // If the token didn't change, do nothing (prevents loops).
-            var u = getUser();
-            if (u && u.token === token) {
-              log("oauth success (duplicate), token unchanged — skipping reload");
-              return;
-            }
+    if (e.data.startsWith("authorization:github:success:")) {
+      const token = e.data.replace("authorization:github:success:", "").trim();
+      await saveUserToken(token);
+      sessionStorage.setItem(RELOAD_FLAG, "1");
+      location.replace("/admin/?no_bundle_cache=1#/");
+    }
+  });
 
-            log("oauth success; token received");
-            saveUser(token);
+  if (sessionStorage.getItem(RELOAD_FLAG)) {
+    sessionStorage.removeItem(RELOAD_FLAG);
+    log("post-reload: auto-init Decap");
+  }
+})();
+</script>
 
-            // Reload once with cache-buster so Decap sees the token, then auto-inits.
-            sessionStorage.setItem(RELOAD_FLAG, "1");
-            var url = location.pathname + "?no_bundle_cache=1" + location.hash;
-            location.replace(url);
-          }
-          else if (e.data.indexOf("authorization:github:error:") === 0) {
-            err("oauth error", e.data);
-          }
-        }, false);
-      })();
-    </script>
   </head>
   <body>
     <!-- Load Decap AFTER the shim so it can see the token on first paint -->
