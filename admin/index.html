@@ -1,4 +1,99 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Admin sanity</title>
-<p>Admin is being served.</p>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlowformLab CMS</title>
+    <meta name="robots" content="noindex" />
+
+    <!-- We will initialize CMS ourselves to avoid race conditions -->
+    <script>
+      window.CMS_MANUAL_INIT = true;
+    </script>
+
+    <style>
+      /* keep a stable mount to avoid React unmount/mount races */
+      #nc-root { min-height: 60vh; }
+    </style>
+
+    <script>
+      (function () {
+        const OAUTH_ORIGIN = "https://ffl-oauth.vercel.app";
+        let started = false;
+
+        function saveToken(token) {
+          const payload = JSON.stringify({ token: token });
+          try {
+            localStorage.setItem("decap-cms-user", payload);
+            localStorage.setItem("netlify-cms-user", payload); // legacy key
+            console.log("[admin] saved token to localStorage");
+          } catch (e) {
+            console.warn("[admin] failed to save token:", e);
+          }
+        }
+
+        function hasUser() {
+          try {
+            return !!localStorage.getItem("decap-cms-user");
+          } catch (_) {
+            return false;
+          }
+        }
+
+        function startCMS() {
+          if (started) return;
+          if (!window.CMS) {
+            requestAnimationFrame(startCMS);
+            return;
+          }
+          started = true;
+          console.log("[admin] starting CMS.init()");
+          window.CMS.init({ config: "/admin/config.yml" });
+        }
+
+        // Receive token from OAuth popup
+        window.addEventListener(
+          "message",
+          (e) => {
+            if (e.origin !== OAUTH_ORIGIN) return;
+            const s = String(e.data || "");
+            if (!s.startsWith("authorization:github:success:")) return;
+
+            const token = s.replace("authorization:github:success:", "").trim();
+            console.log("[admin] oauth success; token received");
+            saveToken(token);
+
+            if (!location.hash || location.hash === "#/login") {
+              location.hash = "#/";
+            }
+            startCMS();
+          },
+          false
+        );
+
+        // Optional emergency clear: /admin/?clear=1
+        if (location.search.includes("clear=1")) {
+          localStorage.removeItem("decap-cms-user");
+          localStorage.removeItem("netlify-cms-user");
+          console.log("[admin] cleared stored user");
+        }
+
+        window.addEventListener("load", () => {
+          if (hasUser()) {
+            console.log("[admin] user exists; booting CMS");
+            startCMS();
+          } else {
+            console.log("[admin] no user found; waiting for OAuth popup");
+          }
+        });
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="nc-root"></div>
+    <!-- Load Decap *after* we set CMS_MANUAL_INIT -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  </body>
+</html>
