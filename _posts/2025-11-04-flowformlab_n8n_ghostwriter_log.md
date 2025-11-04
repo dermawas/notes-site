@@ -29,51 +29,16 @@ FlowformLab-ready Markdown.
 
 ## Work Timeline
 
-  -----------------------------------------------------------------------
-  Day               Date              Key Activities    Output
-  ----------------- ----------------- ----------------- -----------------
-  Day 1             Kickoff           Defined goals &   Project charter +
-                                      writing           architecture
-                                      constraints. Set  outline
-                                      up n8n / Ollama   
-                                      baseline.         
+| Date | Milestone | Key Activities | Output |
+|------|-----------|----------------|--------|
+| **Sat, 1 Nov 2025** | Kickoff | Defined goals & writing constraints. Set up n8n / Ollama baseline. | Project charter + architecture outline |
+| **Sun, 2 Nov 2025** | Headings Engine | Built 3-heading generator sub-workflow, JSON parser + fallbacks | Stable headings module |
+| **Mon, 3 Nov 2025** | TL;DR + Diagram Engine | Added TL;DR + Mermaid diagram subflow w/ resilience to parsing errors | Summary + diagram generator |
+| **Tue, 4 Nov 2025** | Body Writer + Merge | Built body writer, added Markdown cleanup + JSON recovery, final merge logic | ✅ End-to-end pipeline working |
 
-  Day 2             Headings Engine   Built             Headings
-                                      sub-workflow for  generator stable
-                                      3 headings JSON + 
-                                      parser            
-                                      normalization.    
-
-  Day 3             TL;DR Module      Added TL;DR +     Summary + diagram
-                                      Mermaid diagram   automation
-                                      subflow with      
-                                      resilience to     
-                                      parsing errors.   
-
-  Day 4             Body Writer       Built body writer Full body
-                                      workflow,         generation
-                                      Markdown clean-up working
-                                      scripts, and JSON 
-                                      fallbacks.        
-
-  Day 5             Integration & QA  Connected flows,  Full pipeline
-                                      fixed parameter   end-to-end green
-                                      passing, added    
-                                      merge logic,      
-                                      markdown output   
-                                      assembly.         
-
-  Day 6             Refinement        Improved code     Reliable &
-                                      resilience,       reusable
-                                      diagram parsing,  automation
-                                      heading           
-                                      extraction, and   
-                                      human-readable    
-                                      article assembly. 
-  -----------------------------------------------------------------------
-
-> **Total time invested:** \~6 days (iterative)\
+> **Total time invested:** ~4 days (iterative)  
 > **Milestone achieved:** Fully automated topic → structured draft flow
+
 
 ## Deliverables Completed
 
