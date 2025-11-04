@@ -1,19 +1,16 @@
 ---
 layout: single
-title: "About"
+title: "About FlowformLab"
 permalink: /about/
 description: "FlowformLab — a personal lab for systems, tinkering, reflection, and learning through doing."
-header:
-  overlay_image:
-  caption:
-  overlay_filter:
 toc: false
+# Optional: make content area wider
+# classes: wide
 ---
-## About
 
 **FlowformLab** is a personal journal on how things work — and how to make them work better (or at least, better *for me*).
 
-### Why the name?
+## Why the name?
 
 The name reflects the heart of the practice:
 
@@ -60,9 +57,7 @@ A lab is where tools are tested, assumptions are challenged, and craft evolves.
 
 ---
 
----
-
-### 📬 Contact
+## 📬 Contact
 
 If you’d like to get in touch:
 
