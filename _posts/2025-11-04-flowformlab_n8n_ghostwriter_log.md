@@ -66,62 +66,31 @@ FlowformLab-ready Markdown.
 
 ## Risks & Mitigation
 
-  ------------------------------------------------------------------------------
-  Risk              Description    Likelihood     Impact         Mitigation
-  ----------------- -------------- -------------- -------------- ---------------
-  Model drift       LLM breaking   Medium         Medium         Strong prompt
-                    JSON rules                                   guardrails,
-                                                                 fallback
-                                                                 defaults,
-                                                                 post-parsers
+{: .table .table-sm}
+| Risk | Description | Likelihood | Impact | Mitigation |
+|---|---|:---:|:---:|---|
+| Model drift | LLM breaks JSON or returns unexpected formats | Medium | Medium | Strong prompt guardrails, fallback defaults, JSON repair + post-parsers |
+| Pipeline fragility | Parsing or mapping breaks with unusual model output | Medium | High | Unified normalizer functions + stricter schema validation |
+| Style drift | Output tone doesn't match FlowformLab voice | Medium | Medium | Style constraints + manual edit pass |
+| Over-automation | Losing personal narrative/voice | Low | High | Human edit always required — tool accelerates, doesn’t replace thinking |
+| Tooling changes | Ollama / n8n upgrades changing behaviors | Low | Medium | Version pinning + regression test prompts |
 
-  Pipeline          Parsing or     Medium         High           Unified
-  fragility         mapping breaks                               normalizer
-                                                                 functions +
-                                                                 stricter schema
-
-  Stylistic         Output doesn't Medium         Medium         Style
-  inconsistency     match                                        constraints +
-                    FlowformLab                                  post-edit
-                    tone                                         process
-
-  Over-automation   Losing         Low            High           Human-edit
-                    personal voice                               stage always
-                                                                 required
-
-  Future version    Ollama updates Low            Medium         Version
-  changes           break behavior                               pinning +
-                                                                 regression test
-                                                                 prompts
-  ------------------------------------------------------------------------------
 
 ## Next Steps (Backlog)
 
-  -----------------------------------------------------------------------
-  Priority                Task                    Notes
-  ----------------------- ----------------------- -----------------------
-  High                    Connect to Decap CMS to Commit to `/_drafts/`
-                          push draft files        
-
-  High                    Style selector input    Adds brand personality
-                          (Reflective / Technical 
-                          / Audit PMO)            
-
-  Medium                  Template system for     Needed for FlowformLab
-                          YAML front-matter + MM  posts
-                          layout                  
-
-  Medium                  Mermaid diagram         Clean layout + label
-                          refinement layer        rules
-
-  Low                     Long-form structuring   For deep essays
-                          (sections, ToC)         
-  -----------------------------------------------------------------------
+{: .table .table-sm}
+| Priority | Task | Notes |
+|---|---|---|
+| High | Connect draft output to Decap CMS | Commit drafts to `/_drafts` |
+| High | Add “style selector” input | Reflective / Technical / Audit-PMO |
+| Medium | Create YAML front-matter template system | Consistent FlowformLab layout |
+| Medium | Mermaid diagram refinement layer | Label style consistency + readability |
+| Low | Long-form structuring mode | Sections, ToC, research support |
 
 ## Reflection
 
-This pipeline now acts as a **personal strategic writing co-pilot**, not
-a content spawner. FlowformLab remains human-led --- this tool just
-accelerates clarity.
+> 💡 *This pipeline now acts as a personal strategic writing co-pilot — not a content spawner.*
 
-------------------------------------------------------------------------
+I remain the author — this tool accelerates thinking and structure, but FlowformLab stays human-led.  
+The system proved stable, resilient to malformed JSON, and extensible — great foundations for future automation layers.
+
