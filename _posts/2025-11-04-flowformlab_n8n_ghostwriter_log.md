@@ -1,3 +1,17 @@
+---
+layout: single
+title: "FlowformLab AI Ghostwriter — Build Log"
+description: "Day-by-day build log creating an n8n + Ollama automation to generate blog posts and integrate with Decap CMS."
+date: 2025-11-04
+categories: [automation, ai, notebook]
+tags: [n8n, ollama, decap cms, jekyll, flowformlab, automation log]
+toc: true
+toc_label: "Jump to section"
+toc_icon: "cog"
+author: "Suseno Dermawan"
+published: true
+---
+
 # Project Log: n8n Ghost Writer Automation with Local LLM (Ollama)
 
 ## Summary
