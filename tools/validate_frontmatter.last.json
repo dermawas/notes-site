@@ -1,8 +1,14 @@
 {
-  "scanned": 4,
+  "scanned": 5,
   "failed": 0,
-  "warnings": 1,
+  "warnings": 0,
   "results": [
+    {
+      "file": "D:\\seno\\GitHub\\flowformlab\\Repo\\notes-site\\_drafts\\_template.md",
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
     {
       "file": "D:\\seno\\GitHub\\flowformlab\\Repo\\notes-site\\_posts\\2025-10-31-taming-decap-cms-with-ai.md",
       "ok": true,
@@ -25,9 +31,7 @@
       "file": "D:\\seno\\GitHub\\flowformlab\\Repo\\notes-site\\_posts\\_template.md",
       "ok": true,
       "errors": [],
-      "warnings": [
-        "Field 'date' looks unusual for Jekyll: 2025-10-31 16:00 +0700"
-      ]
+      "warnings": []
     }
   ]
 }

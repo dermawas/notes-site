@@ -1,11 +1,13 @@
-Write-Host "`n🔍 Running FlowformLab front-matter validator…" -ForegroundColor Cyan
+# Run Python front-matter validator
+Write-Host "Running front-matter check..." -ForegroundColor Cyan
 
-python tools/validate_frontmatter.py
-$code = $LASTEXITCODE
+python tools\validate_frontmatter.py
+$exitCode = $LASTEXITCODE
 
-if ($code -ne 0) {
-    Write-Host "❌ Validation failed. Fix front-matter before continuing." -ForegroundColor Red
+if ($exitCode -ne 0) {
+    Write-Host "Front-matter check FAILED" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ Front-matter OK" -ForegroundColor Green
+Write-Host "Front-matter OK" -ForegroundColor Green
+exit 0
