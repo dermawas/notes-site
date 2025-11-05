@@ -1,0 +1,22 @@
+﻿=== FlowformLab Progress Snapshot ===
+Timestamp: 2025-11-05 13:53:47
+
+Repo: D:\seno\GitHub\flowformlab\Repo\notes-site
+
+✅ Front-matter validator installed
+✅ Fixer script working
+✅ PowerShell validator wrapper works
+✅ Draft + Post templates validated
+
+⚙️ n8n Ghostwriter Status
+- Headings generator ✅
+- AI heading selector ⏳ (Node B JSON escape fix needed)
+- Heading normalizer ⏳ (after Node B)
+
+📌 Next Step
+Fix JSON payload in Node B to Ollama (llama3.2:1b)
+
+📝 Notes
+- Keep step-by-step method
+- Ask before modifying core templates or scripts
+
