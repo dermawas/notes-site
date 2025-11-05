@@ -1,7 +1,7 @@
 ---
 layout: single
 title: Post title
-date: 2025-10-31 16:00 +0700
+date: "2025-10-31 16:00 +0700"
 categories:
 - notes
 tags: []
