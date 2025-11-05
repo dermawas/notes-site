@@ -1,19 +1,20 @@
 ---
 layout: single
-title: "Post title"
+title: Post title
 date: 2025-10-31 16:00 +0700
-categories: [notes]
+categories:
+- notes
 tags: []
-excerpt:
-description:
+excerpt: null
+description: null
 header:
-  overlay_image:
-  caption:
-  overlay_filter:
+  overlay_image: null
+  caption: null
+  overlay_filter: null
 toc: false
-toc_label:
+toc_label: null
 author_profile: false
-classes:
+classes: null
+published: true
 ---
-
 Write your post here…

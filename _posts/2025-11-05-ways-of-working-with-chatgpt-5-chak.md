@@ -1,15 +1,17 @@
 ---
 title: Ways of Working with Chatgpt 5 (Chak)
-date: 2025-11-05 11:53:00 +07:00
+date: '2025-11-05 11:53:00+07:00'
 categories:
-  - notes
+- notes
 tags:
-  - SDLC
+- SDLC
 toc: false
 advanced:
   layout: single
   author_profile: false
   published: true
+layout: single
+published: true
 ---
 after a lot of forgetting constant, variable name and loss of suggestion & some improvement idea.\
 Today, half day is dedicated to create a product backlog as a source of truth for both I & Chak.\
