@@ -1,39 +1,27 @@
 ﻿# FlowformLab Project Snapshot
 
-**Timestamp:** 2025-11-06 12:16:45 (SE Asia Standard Time)
+**Timestamp:** 2025-11-06 12:41:58 (SE Asia Standard Time)
 **Repo:** D:\seno\GitHub\flowformlab\Repo\notes-site
 **Owner / Project #:** dermawas / 2
 
 ## Environment
 
 - Shell: PowerShell
-- Editor: PowerShell for scripts (.ps1)
 - n8n & Ollama in Docker (Windows Desktop)
 - Model: llama3.2:1b
 - Ollama API: http://host.docker.internal:11434/api/generate
 
 ## Git
 
-- Git: NOT AVAILABLE in current PowerShell session
-
-### Staged changes
-```
-(git not found)
-```
-### Unstaged changes
-```
-(git not found)
-```
-### Status (porcelain)
-```
-(git not found)
-```
+(git not found in session)
 
 ## Front-Matter Validator (last run)
 
-````
-(Validator JSON present but expected keys not found.)
-````
+```
+Checked: 
+Errors: 
+Warnings: 
+```
 
 ## Notes
 
