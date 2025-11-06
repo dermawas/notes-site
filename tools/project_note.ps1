@@ -1,11 +1,10 @@
-# project_note.ps1 — FlowformLab v4.2a (param-compatible, DI resolver with poll + GraphQL fallback)
-# Goal: Update or create ONE "FlowformLab Project Snapshot" DraftIssue card without duplicates.
-# Order:
+# project_note.ps1 — FlowformLab v4.2d (param-compatible)
+# Idempotent project snapshot: updates the same DraftIssue card (no duplicates)
+# Flow:
 # 1) Use stored DI_ to edit
 # 2) Use stored PVTI_ -> poll DI_ -> edit
 # 3) GraphQL list by title -> DI_ -> edit
 # 4) Create -> capture PVTI_ -> poll DI_ -> edit (else save PVTI_ for next run)
-# Notes: ASCII-only logging, requires gh CLI authenticated.
 
 [CmdletBinding()]
 param(
@@ -18,7 +17,7 @@ param(
   [string]$LastDraftId   = "$PSScriptRoot\last_note_draft_id.txt",  # DI_...
   # Known ProjectV2 node id; leave empty to auto-resolve via GraphQL
   [string]$ProjectNodeId = "PVT_kwHOAOgW284BHRNH",
-  # Polling params (tuned for GitHub eventual consistency)
+  # Polling params for eventual consistency
   [int]$MaxPollTries = 7,
   [int]$PollDelaySec = 12
 )
@@ -38,7 +37,7 @@ $ghExe = Resolve-Exe -name "gh" -fallbacks @(
 
 if(-not (Test-Path -LiteralPath $SnapshotPath)){ throw "Snapshot file not found: $SnapshotPath" }
 
-Write-Host "=== project_note.ps1 v4.2a ==="
+Write-Host "=== project_note.ps1 v4.2d ==="
 Write-Host "Owner:          $Owner"
 Write-Host "Project number: $ProjectNumber"
 Write-Host "Title:          $Title"
@@ -79,7 +78,7 @@ query GetProject(\$owner:String!, \$number:Int!) {
 
 # ---------- Create / Edit ----------
 function Edit-Draft([string]$draftId,[string]$title,[string]$bodyText){
-  # IMPORTANT: Edit by DraftIssue id (DI_) via GraphQL mutation (not project item-edit)
+  # Edit by DraftIssue id (DI_) via GraphQL mutation
   $m = @"
 mutation UpdateDraft(\$draftId:ID!, \$title:String!, \$body:String!) {
   updateProjectV2DraftIssue(input:{ draftIssueId:\$draftId, title:\$title, body:\$body }) {
@@ -91,10 +90,13 @@ mutation UpdateDraft(\$draftId:ID!, \$title:String!, \$body:String!) {
   Write-Host "Edited DraftIssue DI=$draftId"
 }
 
-function Create-Item-Capture([string]$title,[string]$bodyPath){
-  # Create a DraftIssue card and capture PVTI_ (and DI_ if immediately available)
-  Write-Host "Creating new DraftIssue card..."
-  $raw = & $ghExe project item-create --owner "$Owner" --number $ProjectNumber --title "$title" --body-file "$bodyPath" --format json 2>$null
+function Create-Item-Capture([int]$projectNumber,[string]$owner,[string]$title,[string]$bodyText){
+  # Create via positional <number> + --owner + --body (here-string); compatible with your gh build
+  Write-Host "Creating new DraftIssue card (via project number + --owner)..."
+  $raw = & $ghExe project item-create $projectNumber --owner "$owner" --title "$title" --body @"
+$bodyText
+"@ --format json 2>$null
+
   $pvti = $null; $di = $null
   if($raw){
     try{
@@ -144,7 +146,6 @@ function Resolve-DI-With-Poll([string]$pvti,[int]$maxTries,[int]$delaySec){
   for($i=1; $i -le $maxTries; $i++){
     $di = Resolve-DI-From-PVTI-Once $pvti
     if($di){
-      # Avoid "$i:" parsing issue by using -f formatting
       Write-Host ("Resolved DI from PVTI on attempt {0}: {1}" -f $i, $di)
       return $di
     }
@@ -242,7 +243,7 @@ if($existingDI){
 }
 
 # 4) Create -> try to resolve DI immediately -> update or save PVTI
-$cap = Create-Item-Capture -title $Title -bodyPath $SnapshotPath
+$cap = Create-Item-Capture -projectNumber $ProjectNumber -owner $Owner -title $Title -bodyText $bodyText
 $pvtiNew = $cap.pvti
 $diNew   = $cap.di
 if(-not $diNew -and $pvtiNew){
