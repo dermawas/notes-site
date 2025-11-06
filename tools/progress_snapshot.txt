@@ -1,8 +1,7 @@
 ﻿# FlowformLab Project Snapshot
 
-**Timestamp:** 2025-11-06 12:41:58 (SE Asia Standard Time)
+**Timestamp:** 2025-11-06 13:32:17 (SE Asia Standard Time)
 **Repo:** D:\seno\GitHub\flowformlab\Repo\notes-site
-**Owner / Project #:** dermawas / 2
 
 ## Environment
 
@@ -13,14 +12,12 @@
 
 ## Git
 
-(git not found in session)
+(git details omitted in writer-only snapshot)
 
 ## Front-Matter Validator (last run)
 
 ```
-Checked: 
-Errors: 
-Warnings: 
+(No validator run found at tools\validate_frontmatter.last.json)
 ```
 
 ## Notes
@@ -30,4 +27,4 @@ Warnings:
 ## Next Suggested Steps
 
 - Finalize Node B: AI heading picker in n8n (fix JSON parse â†’ Pick Normalizer â†’ integration test).
-- Extend snapshot automation to update an existing Project card (future project_note.ps1).
+- Use project_note.ps1 to post/update the single board card (no posting from snapshot.ps1).
