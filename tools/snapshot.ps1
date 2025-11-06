@@ -1,147 +1,115 @@
-<#  snapshot.ps1
-    FlowformLab Project Board Snapshot (PS5-safe + resilient)
-    - Generates tools\progress_snapshot.txt with environment + (optional) git + validator summary
-    - Posts as a Draft item (note) to GitHub Project v2 via gh CLI
-    - Confirmed working with personal projects (dermawas / flowformlab.com backlog)
+<#  project_note.ps1
+    Update (or create) a single Project note card by Title on a personal GitHub Projects v2 board.
+
+    Behavior:
+      - Reads the note body from tools\progress_snapshot.txt (or a custom file).
+      - Looks for an existing Draft item with the same Title.
+      - If found, tries to update via `gh project item-edit`.
+        - If edit isn't supported in your gh version, it deletes the old card and creates a fresh one.
+      - If not found, creates a new Draft note card.
+
+    Usage:
+      .\project_note.ps1
+      .\project_note.ps1 -Title "FlowformLab Project Snapshot"
+      .\project_note.ps1 -BodyPath "D:\path\to\custom_body.md"
 #>
 
 [CmdletBinding()]
 param(
-  [string]$Owner            = "dermawas",
-  [int]   $ProjectNumber    = 2,
-  [string]$RepoPath         = "D:\seno\GitHub\flowformlab\Repo\notes-site",
-  [string]$Title            = "FlowformLab Project Snapshot",
-  [string]$ManualNotesPath  = "$PSScriptRoot\progress_manual.txt",
-  [switch]$PostToProject
+  [string]$Owner         = "dermawas",
+  [int]   $ProjectNumber = 2,
+  [string]$Title         = "FlowformLab Project Snapshot",
+  [string]$RepoPath      = "D:\seno\GitHub\flowformlab\Repo\notes-site",
+  [string]$BodyPath      = "$PSScriptRoot\progress_snapshot.txt"
 )
 
 $ErrorActionPreference = "Stop"
-function New-Section([string]$Name) { "## $Name`r`n" }
 
-# --- Resolve paths ---
+# --- Sanity checks ---
 if (-not (Test-Path -LiteralPath $RepoPath)) { throw "RepoPath not found: $RepoPath" }
 $toolsDir = Join-Path $RepoPath "tools"
 if (-not (Test-Path -LiteralPath $toolsDir)) { New-Item -ItemType Directory -Path $toolsDir | Out-Null }
+if (-not (Test-Path -LiteralPath $BodyPath)) { throw "Body file not found: $BodyPath" }
 
-$snapshotPath  = Join-Path $toolsDir "progress_snapshot.txt"
-$validatorJson = Join-Path $toolsDir "validate_frontmatter.last.json"
-
-# --- Locate executables ---
 function Resolve-Exe([string]$name, [string[]]$fallbacks) {
   $cmd = Get-Command $name -ErrorAction SilentlyContinue
   if ($cmd) { return $cmd.Source }
-  foreach ($path in $fallbacks) {
-    if (Test-Path -LiteralPath $path) { return $path }
-  }
+  foreach ($p in $fallbacks) { if (Test-Path -LiteralPath $p) { return $p } }
   return $null
 }
-
-$gitExe = Resolve-Exe -name "git" -fallbacks @(
-  "$Env:ProgramFiles\Git\cmd\git.exe",
-  "$Env:ProgramFiles\Git\bin\git.exe"
-)
 
 $ghExe = Resolve-Exe -name "gh" -fallbacks @(
   "$Env:ProgramFiles\GitHub CLI\gh.exe",
   "$Env:LocalAppData\Programs\GitHub CLI\gh.exe"
 )
+if (-not $ghExe) { throw "GitHub CLI (gh) not found on PATH." }
 
-function Invoke-Git([string]$ArgsString) {
-  if (-not $gitExe) { return $null }
-  try { & $gitExe @($ArgsString -split ' ') 2>$null } catch { return $null }
+# --- Load body text (as-is; keep multiline) ---
+$body = Get-Content -LiteralPath $BodyPath -Raw
+
+Write-Host "🔎 Searching existing items on project #$ProjectNumber (owner=$Owner)..."
+# item-list JSON typically includes: id, title, type, content, etc.
+# We only need id + title.
+$itemListJson = & $ghExe project item-list $ProjectNumber --owner "$Owner" --format json 2>$null
+$existing = $null
+if ($itemListJson) {
+  try {
+    $items = $itemListJson | ConvertFrom-Json
+    # Match exact title on Draft items first
+    $existing = $items | Where-Object { $_.title -eq $Title -and ($_.type -eq "DRAFT_ISSUE" -or -not $_.type) } | Select-Object -First 1
+    # If not found, match exact title regardless of type
+    if (-not $existing) { $existing = $items | Where-Object { $_.title -eq $Title } | Select-Object -First 1 }
+  } catch {
+    Write-Warning "Could not parse gh JSON: $($_.Exception.Message)"
+  }
+} else {
+  Write-Warning "No output from 'gh project item-list'. (Older gh? Not authenticated?)"
 }
 
-Push-Location $RepoPath
-try {
-  # --- Environment ---
-  $nowLocal = Get-Date
-  $tz = (Get-TimeZone).Id
-
-  # --- Git Info ---
-  $gitAvailable = $false
-  $branch = $latestCommit = $statusPorc = $null
-  if ($gitExe) {
-    $gitAvailable = $true
-    $branch       = (Invoke-Git "rev-parse --abbrev-ref HEAD")
-    $latestCommit = (Invoke-Git "log -1 --pretty=format:`"%h %ad %s`" --date=iso")
-    $statusPorc   = (Invoke-Git "status --porcelain=v1")
-  }
-
-  # --- Validator ---
-  $validatorSummary = ""
-  if (Test-Path -LiteralPath $validatorJson) {
-    try {
-      $vf = Get-Content -LiteralPath $validatorJson -Raw | ConvertFrom-Json
-      $validatorSummary = "Checked: $($vf.checkedCount)`nErrors: $($vf.errorCount)`nWarnings: $($vf.warningCount)"
-    } catch {
-      $validatorSummary = "(Could not parse validator JSON)"
-    }
-  } else {
-    $validatorSummary = "(No validator run found)"
-  }
-
-  # --- Manual notes ---
-  $manualNotes = if (Test-Path -LiteralPath $ManualNotesPath) {
-    (Get-Content -LiteralPath $ManualNotesPath -Raw)
-  } else {
-    "(Add optional notes at: $ManualNotesPath)"
-  }
-
-  # --- Compose body ---
-  $lines = @()
-  $lines += "# FlowformLab Project Snapshot"
-  $lines += ""
-  $lines += "**Timestamp:** $($nowLocal.ToString('yyyy-MM-dd HH:mm:ss')) ($tz)"
-  $lines += "**Repo:** $RepoPath"
-  $lines += "**Owner / Project #:** $Owner / $ProjectNumber"
-  $lines += ""
-  $lines += (New-Section 'Environment')
-  $lines += "- Shell: PowerShell"
-  $lines += "- n8n & Ollama in Docker (Windows Desktop)"
-  $lines += "- Model: llama3.2:1b"
-  $lines += "- Ollama API: http://host.docker.internal:11434/api/generate"
-  $lines += ""
-  $lines += (New-Section 'Git')
-  if ($gitAvailable) {
-    $lines += "- Branch: $branch"
-    $lines += "- Latest commit: $latestCommit"
-    $lines += '```'
-    $lines += ($statusPorc | Out-String).TrimEnd()
-    $lines += '```'
-  } else {
-    $lines += "(git not found in session)"
-  }
-  $lines += ""
-  $lines += (New-Section 'Front-Matter Validator (last run)')
-  $lines += '```'
-  $lines += $validatorSummary
-  $lines += '```'
-  $lines += ""
-  $lines += (New-Section 'Notes')
-  $lines += $manualNotes
-  $lines += ""
-  $lines += (New-Section 'Next Suggested Steps')
-  $lines += "- Finalize Node B: AI heading picker in n8n (fix JSON parse → Pick Normalizer → integration test)."
-  $lines += "- Extend snapshot automation to update an existing Project card (future project_note.ps1)."
-
-  $body = ($lines -join "`r`n")
-  $body | Out-File -LiteralPath $snapshotPath -Encoding UTF8
-  Write-Host "✅ Wrote snapshot: $snapshotPath"
-
-  if ($PostToProject) {
-    if (-not $ghExe) {
-      Write-Warning "GitHub CLI not found. Install gh.exe."
-      return
-    }
-
-    Write-Host "Resolved project node id (hardcoded): PVT_kwHOAOgW284BHRNH"
-    Write-Host "Creating project note via gh CLI..."
-    & $ghExe project item-create $ProjectNumber --owner "$Owner" --title "$Title" --body @"
-$body
+function TryEdit {
+  param([string]$ItemId, [string]$TitleToSet, [string]$BodyToSet)
+  Write-Host "✏️  Trying in-place edit (gh project item-edit)..."
+  try {
+    & $ghExe project item-edit $ProjectNumber --owner "$Owner" --id "$ItemId" --title "$TitleToSet" --body @"
+$BodyToSet
 "@
-    Write-Host "✅ Posted snapshot via gh CLI (owner=$Owner, project=$ProjectNumber)"
+    return $true
+  } catch {
+    Write-Warning "item-edit failed: $($_.Exception.Message)"
+    return $false
   }
-
-} finally {
-  Pop-Location
 }
+
+function CreateNew {
+  param([string]$TitleToSet, [string]$BodyToSet)
+  Write-Host "➕ Creating new note..."
+  & $ghExe project item-create $ProjectNumber --owner "$Owner" --title "$TitleToSet" --body @"
+$BodyToSet
+"@
+}
+
+function DeleteItem {
+  param([string]$ItemId)
+  Write-Host "🗑️  Deleting old item id=$ItemId..."
+  try {
+    & $ghExe project item-delete $ProjectNumber --owner "$Owner" --id "$ItemId"
+  } catch {
+    Write-Warning "Delete failed: $($_.Exception.Message)"
+  }
+}
+
+if ($existing -and $existing.id) {
+  Write-Host "✅ Found existing item: id=$($existing.id)  title='$($existing.title)'"
+  # Try an in-place edit first; if not supported, delete + create new.
+  if (-not (TryEdit -ItemId $existing.id -TitleToSet $Title -BodyToSet $body)) {
+    DeleteItem -ItemId $existing.id
+    CreateNew -TitleToSet $Title -BodyToSet $body
+  } else {
+    Write-Host "✅ Updated existing card."
+  }
+} else {
+  Write-Host "ℹ️  No existing item with title '$Title' — will create a new one."
+  CreateNew -TitleToSet $Title -BodyToSet $body
+}
+
+Write-Host "🎯 Done."
