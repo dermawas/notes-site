@@ -1,9 +1,10 @@
-# project_note.ps1 — FlowformLab v4.3 (PVTI-first, no DI)
-# Idempotent updates using gh CLI only:
-# 1) Use stored PVTI_ -> item-edit
-# 2) Else list items by title -> pick newest PVTI_ -> item-edit
-# 3) Else create -> capture PVTI_ -> item-edit (same run)
-# No DI / GraphQL content lookups. ASCII-only logs.
+# project_note.ps1 — FlowformLab v4.5a (CLI-only DI; title-guard; no duplicates)
+# Strategy:
+#   - Parse `gh project item-list` to find the NEWEST item with Title.
+#   - If found and it has content.id (DI_), update it directly via gh project item-edit (DI_ required by your gh).
+#   - If none exists, create ONE draft issue, then exit (no loops).
+#   - Subsequent runs always update the newest by title (no more creating while one exists).
+# ASCII-only logs. No GraphQL required.
 
 [CmdletBinding()]
 param(
@@ -11,8 +12,8 @@ param(
   [int]   $ProjectNumber = 2,
   [string]$Title         = "FlowformLab Project Snapshot",
   [string]$SnapshotPath  = "$PSScriptRoot\progress_snapshot.txt",
-  [string]$LastItemId    = "$PSScriptRoot\last_note_item_id.txt",   # PVTI_ cache
-  [string]$ProjectNodeId = "PVT_kwHOAOgW284BHRNH"                    # used by item-edit
+  [string]$LastDraftId   = "$PSScriptRoot\last_note_draft_id.txt",   # DI_ cache (optional)
+  [string]$ProjectNodeId = "PVT_kwHOAOgW284BHRNH"
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,7 +31,7 @@ $ghExe = Resolve-Exe -name "gh" -fallbacks @(
 
 if(-not (Test-Path -LiteralPath $SnapshotPath)){ throw "Snapshot file not found: $SnapshotPath" }
 
-Write-Host "=== project_note.ps1 v4.3 (PVTI-first) ==="
+Write-Host "=== project_note.ps1 v4.5a (CLI-only DI) ==="
 Write-Host "Owner:          $Owner"
 Write-Host "Project number: $ProjectNumber"
 Write-Host "Project node id:$ProjectNodeId"
@@ -40,18 +41,18 @@ Write-Host "Snapshot:       $SnapshotPath"
 function Read-AllText([string]$path){
   try { return [IO.File]::ReadAllText($path) } catch { throw "Failed to read: $path" }
 }
-function Save-PVTI([string]$pvti){
-  if($pvti){ $pvti | Out-File -LiteralPath $LastItemId -Encoding ASCII }
+function SaveText([string]$path,[string]$val){
+  if($val){ $val | Out-File -LiteralPath $path -Encoding ASCII }
 }
-function Load-PVTI(){
-  if(Test-Path -LiteralPath $LastItemId){
-    $v = (Get-Content -LiteralPath $LastItemId -Raw).Trim()
+function LoadText([string]$path){
+  if(Test-Path -LiteralPath $path){
+    $v = (Get-Content -LiteralPath $path -Raw).Trim()
     if($v){ return $v }
   }
   return $null
 }
 
-# --- gh helpers (CLI-only) ---
+# --- CLI helpers ---
 function Gh-ItemsJson {
   try { & $ghExe project item-list $ProjectNumber --owner "$Owner" --format json 2>$null } catch { return $null }
 }
@@ -59,83 +60,78 @@ function Parse-Json($j){
   if(-not $j){ return @() }
   try { return $j | ConvertFrom-Json } catch { return @() }
 }
-function FindNewestByTitle($items,$title){
+function FindByTitleNewest($items,$title){
   $items | Where-Object { $_.title -eq $title } |
     Sort-Object @{Expression={$_.updatedAt}}, @{Expression={$_.createdAt}} -Descending |
     Select-Object -First 1
 }
 
-function Edit-By-PVTI([string]$pvti,[string]$title,[string]$bodyText){
-  if(-not $pvti){ throw "Edit-By-PVTI: missing pvti" }
-  # NOTE: item-edit expects the project item id (PVTI_) + project id
-  Write-Host "Editing item via PVTI=$pvti ..."
-  & $ghExe project item-edit --project-id "$ProjectNodeId" --id "$pvti" --title "$title" --body @"
+function Edit-By-DI([string]$di,[string]$title,[string]$bodyText){
+  if(-not $di){ throw "Edit-By-DI: missing DI id" }
+  Write-Host "Editing DraftIssue via DI=$di ..."
+  & $ghExe project item-edit --project-id "$ProjectNodeId" --id "$di" --title "$title" --body @"
 $bodyText
 "@ | Out-Null
 }
 
-function Create-Item([int]$projectNumber,[string]$owner,[string]$title,[string]$bodyText){
-  Write-Host "Creating new DraftIssue card (CLI create)..."
+function Create-One([int]$projectNumber,[string]$owner,[string]$title,[string]$bodyText){
+  Write-Host "Creating ONE DraftIssue card (only because none exists)..."
   $raw = & $ghExe project item-create $projectNumber --owner "$owner" --title "$title" --body @"
 $bodyText
 "@ --format json 2>$null
-  $pvti = $null
   if($raw){
     try{
       $obj = $raw | ConvertFrom-Json
-      if($obj.id){ $pvti = $obj.id }
-      if(-not $pvti -and $obj.items -and $obj.items.Count -gt 0){ $pvti = $obj.items[0].id }
+      if($obj.id){ Write-Host "Created PVTI=$($obj.id)" }
+      elseif($obj.items -and $obj.items.Count -gt 0){ Write-Host "Created PVTI=$($obj.items[0].id)" }
     } catch { }
   }
-  if($pvti){ Write-Host "Created PVTI=$pvti" } else { Write-Host "Warning: gh did not return PVTI id." }
-  return $pvti
 }
 
 # ---------------- MAIN ----------------
 $bodyText = Read-AllText $SnapshotPath
 
-# 1) Try cached PVTI directly
-$pvti = Load-PVTI
-if($pvti){
+# 0) Fast path: if cached DI exists, try update; if it fails we’ll fall back to list-by-title
+$cachedDI = LoadText $LastDraftId
+if($cachedDI -and $cachedDI -like 'DI_*'){
   try{
-    Edit-By-PVTI -pvti $pvti -title $Title -bodyText $bodyText
-    Write-Host "Done (updated via cached PVTI)."
+    Edit-By-DI -di $cachedDI -title $Title -bodyText $bodyText
+    Write-Host "Done (updated via cached DI)."
     exit 0
   } catch {
-    Write-Warning "Cached PVTI edit failed: $($_.Exception.Message)"
-    # proceed to re-discover by title
+    Write-Warning "Cached DI update failed: $($_.Exception.Message)"
   }
 }
 
-# 2) Discover newest PVTI by title (no create if one exists)
+# 1) List items, pick newest with Title, use its content.id (DI_) directly
 $items = Parse-Json (Gh-ItemsJson)
-$newest = FindNewestByTitle $items $Title
-if($newest -and $newest.id){
-  try{
-    Edit-By-PVTI -pvti $newest.id -title $Title -bodyText $bodyText
-    Save-PVTI $newest.id
-    Write-Host "Done (updated via title discovery)."
+$newest = FindByTitleNewest $items $Title
+
+if($newest){
+  # When your CLI includes DraftIssue info, content.id is DI_*
+  $di = $null
+  if($newest.content -and $newest.content.id -and $newest.content.id -like 'DI_*'){
+    $di = $newest.content.id
+  }
+
+  if($di){
+    try{
+      Edit-By-DI -di $di -title $Title -bodyText $bodyText
+      SaveText $LastDraftId $di
+      Write-Host "Done (updated via item-list DI)."
+      exit 0
+    } catch {
+      Write-Warning "Update via item-list DI failed: $($_.Exception.Message)"
+      Write-Host "Existing card detected; not creating to avoid duplicates."
+      exit 1
+    }
+  } else {
+    Write-Host "Existing card(s) detected, but no DI in CLI output; not creating to avoid duplicates."
     exit 0
-  } catch {
-    Write-Warning "Edit via title discovery failed: $($_.Exception.Message)"
-    # fall through to create
   }
 }
 
-# 3) Create one card (only if none exists), then edit immediately
-$pvtiNew = Create-Item -projectNumber $ProjectNumber -owner $Owner -title $Title -bodyText $bodyText
-if($pvtiNew){
-  try{
-    Edit-By-PVTI -pvti $pvtiNew -title $Title -bodyText $bodyText
-    Save-PVTI $pvtiNew
-    Write-Host "Done (created and updated same run)."
-    exit 0
-  } catch {
-    Save-PVTI $pvtiNew
-    Write-Host "Created PVTI cached; update failed this run but will succeed next."
-    exit 0
-  }
-}
-
-Write-Host "Could not create or update the snapshot card."
-exit 1
+# 2) If we reach here, NO card exists with this Title -> create ONE
+Create-One -projectNumber $ProjectNumber -owner $Owner -title $Title -bodyText $bodyText
+Write-Host "Created initial card. Re-run to update."
+exit 0
