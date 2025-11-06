@@ -1,10 +1,10 @@
-<# project_note.ps1
-   FlowformLab — Update or Create ONE "FlowformLab Project Snapshot" card without duplicates
-   - Works with GitHub Projects v2 (personal project)
-   - Uses gh CLI
-   - IMPORTANT: gh project item-edit wants the Draft Issue *content* id (prefix DI_), not the PVTI_ item id.
-     We resolve DI_ via GraphQL given a PVTI_ item id.
-#>
+# project_note.ps1 (ASCII-only, v2025-11-06-E)
+# Update or create ONE "FlowformLab Project Snapshot" card without duplicates.
+# Logic order:
+# 1) Use stored DI_ to edit
+# 2) Use stored PVTI_ -> resolve DI_ with retries -> edit
+# 3) List by title -> resolve DI_ with retries -> edit
+# 4) Create -> capture PVTI_ -> resolve DI_ with retries -> edit (else save PVTI_ for next run)
 
 [CmdletBinding()]
 param(
@@ -18,150 +18,172 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-
-# Personal project node id (confirmed)
 $ProjectId = "PVT_kwHOAOgW284BHRNH"
 
-function Resolve-Exe([string]$name, [string[]]$fallbacks) {
+function Resolve-Exe([string]$name,[string[]]$fallbacks){
   $cmd = Get-Command $name -ErrorAction SilentlyContinue
-  if ($cmd) { return $cmd.Source }
-  foreach ($p in $fallbacks) { if (Test-Path -LiteralPath $p) { return $p } }
-  return $null
+  if($cmd){ return $cmd.Source }
+  foreach($p in $fallbacks){ if(Test-Path $p){ return $p } }
+  throw "GitHub CLI not found"
 }
 
 $ghExe = Resolve-Exe -name "gh" -fallbacks @(
   "$Env:ProgramFiles\GitHub CLI\gh.exe",
   "$Env:LocalAppData\Programs\GitHub CLI\gh.exe"
 )
-if (-not $ghExe) { throw "GitHub CLI (gh) not found in PATH." }
 
-if (-not (Test-Path -LiteralPath $RepoPath))     { throw "RepoPath not found: $RepoPath" }
-if (-not (Test-Path -LiteralPath $SnapshotPath)) { throw "Snapshot file not found: $SnapshotPath" }
+if(-not (Test-Path -LiteralPath $SnapshotPath)){ throw "Snapshot file not found: $SnapshotPath" }
 
-# ---- Helpers ----
-function Gh-Project-Items-Json {
+function Gh-Items {
   try { & $ghExe project item-list $ProjectNumber --owner "$Owner" --format json 2>$null } catch { return $null }
 }
-
-function Parse-Items($json) {
-  if (-not $json) { return @() }
-  try {
-    $obj = $json | ConvertFrom-Json
-    if ($obj -is [System.Array])            { return $obj }
-    elseif ($obj.items)                     { return $obj.items }
-    elseif ($obj.data -and $obj.data.items) { return $obj.data.items }
-    elseif ($obj.id -and $obj.title)        { return @($obj) }
-    else                                    { return @() }
-  } catch { return @() }
+function Parse-Json($j){
+  if(-not $j){ return @() }
+  try { $j | ConvertFrom-Json } catch { @() }
 }
-
-function FindNewestByTitle($items, $title) {
-  $matches = $items | Where-Object { $_.title -eq $title }
-  if (-not $matches) { return $null }
-  $matches | Sort-Object @{Expression={$_.updatedAt}}, @{Expression={$_.createdAt}} -Descending | Select-Object -First 1
+function FindNewestByTitle($items,$title){
+  $items | Where-Object { $_.title -eq $title } |
+    Sort-Object @{Expression={$_.updatedAt}}, @{Expression={$_.createdAt}} -Descending |
+    Select-Object -First 1
 }
-
-# Resolve DI_ draft content id from a PVTI_ item id using GraphQL
-function Resolve-DraftId-From-Item([string]$ItemId) {
-  if (-not $ItemId) { return $null }
+function Resolve-DI-Once($pvti){
+  if(-not $pvti){ return $null }
   $q = @"
-query GetDraft(\$id:ID!) {
-  node(id:\$id) {
+query Q(\$id:ID!){
+  node(id:\$id){
     __typename
     ... on ProjectV2Item {
       id
-      content {
-        __typename
-        ... on DraftIssue { id }
-      }
+      content { __typename ... on DraftIssue { id } }
     }
   }
 }
 "@
   try {
-    $raw = & $ghExe api graphql -f query="$q" -f id="$ItemId" 2>$null
-    if (-not $raw) { return $null }
+    $raw = & $ghExe api graphql -f query="$q" -f id="$pvti" 2>$null
+    if(-not $raw){ return $null }
     $obj = $raw | ConvertFrom-Json
-    if ($obj -and $obj.data -and $obj.data.node -and $obj.data.node.content -and $obj.data.node.content.id) {
+    if($obj -and $obj.data -and $obj.data.node -and $obj.data.node.content -and $obj.data.node.content.id){
       return $obj.data.node.content.id
     }
-  } catch { }
+    return $null
+  } catch { return $null }
+}
+function Resolve-DI-With-Retry($pvti,$tries=10,$delaySec=1){
+  for($i=1; $i -le $tries; $i++){
+    $di = Resolve-DI-Once $pvti
+    if($di){ return $di }
+    Start-Sleep -Seconds $delaySec
+  }
   return $null
 }
-
-function SaveIds($ItemId, $DraftId) {
-  if ($ItemId) { $ItemId | Out-File -LiteralPath $LastItemId -Encoding ASCII }
-  if ($DraftId) { $DraftId | Out-File -LiteralPath $LastDraftId -Encoding ASCII }
+function SaveIds($pvti,$di){
+  if($pvti){ $pvti | Out-File -LiteralPath $LastItemId  -Encoding ASCII }
+  if($di){   $di   | Out-File -LiteralPath $LastDraftId -Encoding ASCII }
 }
-
-function Edit-By-DraftId([string]$DraftId, [string]$TitleToSet, [string]$BodyToSet) {
-  Write-Host "Editing draft (DI) id=$DraftId ..."
-  & $ghExe project item-edit --project-id "$ProjectId" --id "$DraftId" --title "$TitleToSet" --body @"
-$BodyToSet
+function Edit-Draft($di,$title,$body){
+  Write-Host "Editing draft (DI) id=$di ..."
+  & $ghExe project item-edit --project-id "$ProjectId" --id "$di" --title "$title" --body @"
+$body
 "@
 }
+function Create-Item-Capture($title,$body){
+  Write-Host "Creating new note (attempt capture via JSON)..."
+  $raw = & $ghExe project item-create $ProjectNumber --owner "$Owner" --title "$title" --body @"
+$body
+"@ --format json 2>$null
 
-function Create-Item([string]$TitleToSet, [string]$BodyToSet) {
-  Write-Host "Creating new note..."
-  & $ghExe project item-create $ProjectNumber --owner "$Owner" --title "$TitleToSet" --body @"
-$BodyToSet
-"@
-  # Re-list and capture newest
-  $items = Parse-Items (Gh-Project-Items-Json)
-  $newest = FindNewestByTitle $items $TitleToSet
-  if ($newest -and $newest.id) {
-    $pvti = $newest.id
-    $di = Resolve-DraftId-From-Item $pvti
-    SaveIds $pvti $di
-    if ($di) {
-      Write-Host "Created item id=$pvti  (draft content id=$di saved)."
-    } else {
-      Write-Host "Created item id=$pvti  (draft content id not visible yet; will resolve next run)."
-    }
-  } else {
-    Write-Host "Created item (couldn't capture ids from CLI)."
+  $pvti = $null
+  $di   = $null
+  if($raw){
+    try {
+      $obj = $raw | ConvertFrom-Json
+      if($obj.id){ $pvti = $obj.id }
+      if($obj.content -and $obj.content.id){ $di = $obj.content.id }
+      if(-not $pvti -and $obj.items -and $obj.items.Count -gt 0){
+        $pvti = $obj.items[0].id
+        if($obj.items[0].content -and $obj.items[0].content.id){ $di = $obj.items[0].content.id }
+      }
+    } catch { }
   }
+
+  if(-not $pvti){
+    # As a fallback, try to find newest by title once
+    $latest = Parse-Json (Gh-Items) | FindNewestByTitle $title
+    if($latest -and $latest.id){ $pvti = $latest.id }
+  }
+  if($pvti -and -not $di){
+    # Poll DI as it often lags by a second or two
+    $di = Resolve-DI-With-Retry $pvti 10 1
+  }
+  SaveIds $pvti $di
+  return @{ pvti=$pvti; di=$di }
 }
 
-# -------- Main --------
+# MAIN
 $body = Get-Content -LiteralPath $SnapshotPath -Raw
-Write-Host "Scanning project #$ProjectNumber (owner=$Owner) ..."
+Write-Host "project_note.ps1 :: resolve-safe mode"
 
-# 1) Try stored DI_ first
-$storedDI = $null
-if (Test-Path -LiteralPath $LastDraftId) {
-  $storedDI = (Get-Content -LiteralPath $LastDraftId -Raw).Trim()
-}
-if ($storedDI -and $storedDI -like 'DI_*') {
-  try {
-    Edit-By-DraftId -DraftId $storedDI -TitleToSet $Title -BodyToSet $body
-    Write-Host "Updated using stored draft id."
+# 1) Try stored DI first
+$storedDI = if(Test-Path -LiteralPath $LastDraftId){ (Get-Content -LiteralPath $LastDraftId -Raw).Trim() } else { $null }
+if($storedDI -and $storedDI -like 'DI_*'){
+  try{
+    Edit-Draft $storedDI $Title $body
+    Write-Host "Updated existing card (stored DI)."
     exit 0
   } catch {
-    Write-Warning "Edit with stored draft id failed: $($_.Exception.Message)"
+    Write-Warning "Stored DI edit failed: $($_.Exception.Message)"
   }
 }
 
-# 2) Fall back: find latest item by title, then resolve its DI_ and edit
-$items = Parse-Items (Gh-Project-Items-Json)
-$match = FindNewestByTitle $items $Title
-if ($match -and $match.id) {
-  $pvti = $match.id
-  $di = Resolve-DraftId-From-Item $pvti
-  if ($di) {
-    try {
-      Edit-By-DraftId -DraftId $di -TitleToSet $Title -BodyToSet $body
-      SaveIds $pvti $di
-      Write-Host "Updated existing card (matched by title; DI captured)."
+# 2) Try stored PVTI -> resolve DI with retry
+$storedPVTI = if(Test-Path -LiteralPath $LastItemId){ (Get-Content -LiteralPath $LastItemId -Raw).Trim() } else { $null }
+if($storedPVTI -and $storedPVTI -like 'PVTI_*'){
+  $diFromStored = Resolve-DI-With-Retry $storedPVTI 10 1
+  if($diFromStored){
+    try{
+      Edit-Draft $diFromStored $Title $body
+      SaveIds $storedPVTI $diFromStored
+      Write-Host "Updated existing card (resolved DI from stored PVTI)."
       exit 0
     } catch {
-      Write-Warning "Edit by title/DI failed: $($_.Exception.Message)"
+      Write-Warning "Edit via stored PVTI/DI failed: $($_.Exception.Message)"
     }
-  } else {
-    Write-Warning "Could not resolve DI_ from PVTI_ item id=$pvti; will create a new note once."
   }
 }
 
-# 3) Create (first run or if DI couldn’t be resolved)
-Create-Item -TitleToSet $Title -BodyToSet $body
-Write-Host "Done."
+# 3) Try list by title -> resolve DI with retry
+$items = Parse-Json (Gh-Items)
+$found = FindNewestByTitle $items $Title
+if($found -and $found.id){
+  $pvti = $found.id
+  $di = Resolve-DI-With-Retry $pvti 10 1
+  if($di){
+    try{
+      Edit-Draft $di $Title $body
+      SaveIds $pvti $di
+      Write-Host "Updated card via title match."
+      exit 0
+    } catch {
+      Write-Warning "Edit via title match failed: $($_.Exception.Message)"
+    }
+  }
+}
+
+# 4) Create and capture IDs directly (with retries on DI)
+$cap = Create-Item-Capture $Title $body
+$pvtiNew = $cap.pvti
+$diNew   = $cap.di
+if($diNew){
+  try{
+    Edit-Draft $diNew $Title $body
+    Write-Host "Updated immediately after creation."
+    exit 0
+  } catch { }
+}
+if($pvtiNew){
+  Write-Host "Saved PVTI=$pvtiNew. Could not resolve DI yet; next run should update."
+  exit 0
+}
+
+Write-Host "Could not create or resolve item; no changes made."
