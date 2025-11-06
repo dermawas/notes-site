@@ -1,22 +1,45 @@
-﻿=== FlowformLab Progress Snapshot ===
-Timestamp: 2025-11-06 11:02:21
+﻿# FlowformLab Project Snapshot
 
-Repo: D:\seno\GitHub\flowformlab\Repo\notes-site
+**Timestamp:** 2025-11-06 12:13:22 (SE Asia Standard Time)
+**Repo:** D:\seno\GitHub\flowformlab\Repo\notes-site
+**Owner / Project #:** dermawas / 2
 
-âœ… Front-matter validator installed
-âœ… Fixer script working
-âœ… PowerShell validator wrapper works
-âœ… Draft + Post templates validated
+## Environment
 
-âš™ï¸ n8n Ghostwriter Status
-- Headings generator âœ…
-- AI heading selector â³ (Node B JSON escape fix needed)
-- Heading normalizer â³ (after Node B)
+- Shell: PowerShell
+- Editor: PowerShell for scripts (.ps1)
+- n8n & Ollama in Docker (Windows Desktop)
+- Model: llama3.2:1b
+- Ollama API: http://host.docker.internal:11434/api/generate
 
-ðŸ“Œ Next Step
-Fix JSON payload in Node B to Ollama (llama3.2:1b)
+## Git
 
-ðŸ“ Notes
-- Keep step-by-step method
-- Ask before modifying core templates or scripts
+- Git: NOT AVAILABLE in current PowerShell session
 
+### Staged changes
+```
+(git not found)
+```
+### Unstaged changes
+```
+(git not found)
+```
+### Status (porcelain)
+```
+(git not found)
+```
+
+## Front-Matter Validator (last run)
+
+````
+(Validator JSON present but expected keys not found.)
+````
+
+## Notes
+
+(Add optional notes at: D:\seno\GitHub\flowformlab\Repo\notes-site\tools\progress_manual.txt)
+
+## Next Suggested Steps
+
+- Finalize Node B: AI heading picker in n8n (fix JSON parse â†’ Pick Normalizer â†’ integration test).
+- Extend snapshot automation to update an existing Project card (future project_note.ps1).

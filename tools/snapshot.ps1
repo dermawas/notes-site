@@ -1,14 +1,19 @@
 <#  snapshot.ps1
-    FlowformLab Project Board Snapshot
-    - Generates tools\progress_snapshot.txt with environment + git + validator summary
+    FlowformLab Project Board Snapshot (PS5-safe + resilient)
+    - Generates tools\progress_snapshot.txt with environment + (optional) git + validator summary
     - (Optional) Posts as a Draft item (note) to GitHub Project v2 via GraphQL
-    - PS5-safe: no ?? operator; no inline-backticks inside double-quoted strings
+    - Handles missing git/gh gracefully; resolves project id by number OR title
+
+    Usage:
+      .\snapshot.ps1
+      .\snapshot.ps1 -PostToProject
 #>
 
 [CmdletBinding()]
 param(
   [string]$Owner            = "dermawas",
   [int]   $ProjectNumber    = 2,
+  [string]$ProjectTitle     = "flowformlab.com backlog",   # fallback by title if number lookup fails
   [string]$RepoPath         = "D:\seno\GitHub\flowformlab\Repo\notes-site",
   [string]$Title            = "FlowformLab Project Snapshot",
   [string]$ManualNotesPath  = "$PSScriptRoot\progress_manual.txt",
@@ -18,31 +23,145 @@ param(
 $ErrorActionPreference = "Stop"
 function New-Section([string]$Name) { "## $Name`r`n" }
 
-# Verify prerequisites
+# --- Resolve tools dir & output paths ---
 if (-not (Test-Path -LiteralPath $RepoPath)) { throw "RepoPath not found: $RepoPath" }
-
-# Ensure tools dir
 $toolsDir       = Join-Path $RepoPath "tools"
 if (-not (Test-Path -LiteralPath $toolsDir)) { New-Item -ItemType Directory -Path $toolsDir | Out-Null }
 
-# Paths
 $snapshotPath   = Join-Path $toolsDir "progress_snapshot.txt"
 $lastItemPath   = Join-Path $toolsDir "last_project_item_id.txt"
 $lastDraftPath  = Join-Path $toolsDir "last_draft_issue_id.txt"
 $validatorJson  = Join-Path $toolsDir "validate_frontmatter.last.json"
 
+# --- Locate git.exe and gh.exe (gracefully) ---
+function Resolve-Exe([string]$name, [string[]]$fallbacks) {
+  $cmd = Get-Command $name -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  foreach ($path in $fallbacks) {
+    if (Test-Path -LiteralPath $path) { return $path }
+  }
+  return $null
+}
+
+$gitExe = Resolve-Exe -name "git" -fallbacks @(
+  "$Env:ProgramFiles\Git\cmd\git.exe",
+  "$Env:ProgramFiles\Git\bin\git.exe",
+  "$Env:ProgramFiles(x86)\Git\cmd\git.exe",
+  "$Env:ProgramFiles(x86)\Git\bin\git.exe"
+)
+
+$ghExe = Resolve-Exe -name "gh" -fallbacks @(
+  "$Env:ProgramFiles\GitHub CLI\gh.exe",
+  "$Env:LocalAppData\Programs\GitHub CLI\gh.exe"
+)
+
+# Helper to invoke git if available (PS5-safe)
+function Invoke-Git([string]$ArgsString) {
+  if (-not $gitExe) { return $null }
+  try {
+    & $gitExe @($ArgsString -split ' ') 2>$null
+  } catch {
+    return $null
+  }
+}
+
+# --- Helper: resolve ProjectV2 ID with fallbacks ---
+function Get-ProjectV2Id {
+  param(
+    [Parameter(Mandatory=$true)][string]$OwnerLogin,
+    [Parameter(Mandatory=$true)][int]$Number,
+    [Parameter(Mandatory=$true)][string]$Title,
+    [Parameter(Mandatory=$true)][string]$GhExe
+  )
+
+  # 1) Try USER: project by number
+  $qUserByNumber = @'
+query GetProjectId($owner:String!, $number:Int!) {
+  user(login: $owner) {
+    projectV2(number: $number) { id title number }
+  }
+}
+'@
+  $resp = & $GhExe api graphql -f query="$qUserByNumber" -f owner="$OwnerLogin" -F number=$Number | ConvertFrom-Json
+  if ($resp -and $resp.user -and $resp.user.projectV2 -and $resp.user.projectV2.id) {
+    return $resp.user.projectV2.id
+  }
+
+  # 2) Try USER: list by title
+  $qUserList = @'
+query ListProjects($owner:String!) {
+  user(login: $owner) {
+    projectsV2(first: 50) {
+      nodes { id title number }
+    }
+  }
+}
+'@
+  $resp = & $GhExe api graphql -f query="$qUserList" -f owner="$OwnerLogin" | ConvertFrom-Json
+  if ($resp -and $resp.user -and $resp.user.projectsV2 -and $resp.user.projectsV2.nodes) {
+    $match = $resp.user.projectsV2.nodes | Where-Object { $_.title -eq $Title } | Select-Object -First 1
+    if (-not $match) {
+      $match = $resp.user.projectsV2.nodes | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1
+    }
+    if ($match -and $match.id) { return $match.id }
+  }
+
+  # 3) Try ORG: project by number
+  $qOrgByNumber = @'
+query GetProjectIdOrg($owner:String!, $number:Int!) {
+  organization(login: $owner) {
+    projectV2(number: $number) { id title number }
+  }
+}
+'@
+  $resp = & $GhExe api graphql -f query="$qOrgByNumber" -f owner="$OwnerLogin" -F number=$Number | ConvertFrom-Json
+  if ($resp -and $resp.organization -and $resp.organization.projectV2 -and $resp.organization.projectV2.id) {
+    return $resp.organization.projectV2.id
+  }
+
+  # 4) Try ORG: list by title
+  $qOrgList = @'
+query ListProjectsOrg($owner:String!) {
+  organization(login: $owner) {
+    projectsV2(first: 50) {
+      nodes { id title number }
+    }
+  }
+}
+'@
+  $resp = & $GhExe api graphql -f query="$qOrgList" -f owner="$OwnerLogin" | ConvertFrom-Json
+  if ($resp -and $resp.organization -and $resp.organization.projectsV2 -and $resp.organization.projectsV2.nodes) {
+    $match = $resp.organization.projectsV2.nodes | Where-Object { $_.title -eq $Title } | Select-Object -First 1
+    if (-not $match) {
+      $match = $resp.organization.projectsV2.nodes | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1
+    }
+    if ($match -and $match.id) { return $match.id }
+  }
+
+  return $null
+}
+
 Push-Location $RepoPath
 try {
-  # Environment & git
+  # --- Environment ---
   $nowLocal     = Get-Date
   $tz           = (Get-TimeZone).Id
-  $branch       = (git rev-parse --abbrev-ref HEAD) 2>$null
-  $latestCommit = (git log -1 --pretty=format:"%h %ad %s" --date=iso) 2>$null
-  $statusPorc   = (git status --porcelain=v1) 2>$null
-  $staged       = (git diff --cached --name-status) 2>$null
-  $unstaged     = (git diff --name-status) 2>$null
 
-  # Validator summary (optional)
+  # --- Git info (optional if git missing) ---
+  $gitAvailable = $false
+  $branch = $latestCommit = $statusPorc = $null
+  $staged = $unstaged = $null
+
+  if ($gitExe) {
+    $gitAvailable = $true
+    $branch       = (Invoke-Git "rev-parse --abbrev-ref HEAD")
+    $latestCommit = (Invoke-Git "log -1 --pretty=format:`"%h %ad %s`" --date=iso")
+    $statusPorc   = (Invoke-Git "status --porcelain=v1")
+    $staged       = (Invoke-Git "diff --cached --name-status")
+    $unstaged     = (Invoke-Git "diff --name-status")
+  }
+
+  # --- Validator summary (optional) ---
   $validatorSummary = ""
   if (Test-Path -LiteralPath $validatorJson) {
     try {
@@ -66,14 +185,14 @@ Warnings: $warns
     $validatorSummary = "(No validator run found at tools\validate_frontmatter.last.json)"
   }
 
-  # Optional manual notes
+  # --- Optional manual notes ---
   $manualNotes = if (Test-Path -LiteralPath $ManualNotesPath) {
     (Get-Content -LiteralPath $ManualNotesPath -Raw)
   } else {
     "(Add optional notes at: $ManualNotesPath)"
   }
 
-  # Build snapshot body (Markdown) — avoid inline backticks in interpolated strings
+  # --- Build snapshot body (Markdown) ---
   $lines = @()
   $lines += "# FlowformLab Project Snapshot"
   $lines += ""
@@ -89,21 +208,38 @@ Warnings: $warns
   $lines += "- Ollama API: http://host.docker.internal:11434/api/generate"
   $lines += ""
   $lines += (New-Section 'Git')
-  $lines += ("- Branch: {0}" -f $branch)
-  $lines += ("- Latest commit: {0}" -f $latestCommit)
-  $lines += ""
-  $lines += "### Staged changes"
-  $lines += '```'
-  $lines += (($staged | Out-String).TrimEnd())
-  $lines += '```'
-  $lines += "### Unstaged changes"
-  $lines += '```'
-  $lines += (($unstaged | Out-String).TrimEnd())
-  $lines += '```'
-  $lines += "### Status (porcelain)"
-  $lines += '```'
-  $lines += (($statusPorc | Out-String).TrimEnd())
-  $lines += '```'
+  if ($gitAvailable) {
+    $lines += ("- Branch: {0}" -f $branch)
+    $lines += ("- Latest commit: {0}" -f $latestCommit)
+    $lines += ""
+    $lines += "### Staged changes"
+    $lines += '```'
+    $lines += (($staged | Out-String).TrimEnd())
+    $lines += '```'
+    $lines += "### Unstaged changes"
+    $lines += '```'
+    $lines += (($unstaged | Out-String).TrimEnd())
+    $lines += '```'
+    $lines += "### Status (porcelain)"
+    $lines += '```'
+    $lines += (($statusPorc | Out-String).TrimEnd())
+    $lines += '```'
+  } else {
+    $lines += "- Git: NOT AVAILABLE in current PowerShell session"
+    $lines += ""
+    $lines += "### Staged changes"
+    $lines += '```'
+    $lines += '(git not found)'
+    $lines += '```'
+    $lines += "### Unstaged changes"
+    $lines += '```'
+    $lines += '(git not found)'
+    $lines += '```'
+    $lines += "### Status (porcelain)"
+    $lines += '```'
+    $lines += '(git not found)'
+    $lines += '```'
+  }
   $lines += ""
   $lines += (New-Section 'Front-Matter Validator (last run)')
   $lines += '````'
@@ -119,49 +255,36 @@ Warnings: $warns
 
   $body = ($lines -join "`r`n")
 
-  # Write snapshot file
+  # --- Write snapshot file ---
   $body | Out-File -LiteralPath $snapshotPath -Encoding UTF8
-  Write-Host "✅ Wrote snapshot: $snapshotPath"
+  Write-Host "Wrote snapshot: $snapshotPath"
 
   if ($PostToProject.IsPresent) {
-    # Resolve Project node ID (supports user OR org owners)
-    $projectQuery = @"
-query GetProjectId(\$owner:String!, \$number:Int!) {
-  user(login: \$owner) {
-    projectV2(number: \$number) { id }
-  }
-  organization(login: \$owner) {
-    projectV2(number: \$number) { id }
-  }
-}
-"@
-
-    $projRaw = gh api graphql -f query="$projectQuery" -f owner="$Owner" -F number=$ProjectNumber
-    if (-not $projRaw) { throw "Failed to query projectV2 id via gh api." }
-    $projResp = $projRaw | ConvertFrom-Json
-
-    $projectId = $null
-    if ($projResp.user -and $projResp.user.projectV2 -and $projResp.user.projectV2.id) {
-      $projectId = $projResp.user.projectV2.id
-    } elseif ($projResp.organization -and $projResp.organization.projectV2 -and $projResp.organization.projectV2.id) {
-      $projectId = $projResp.organization.projectV2.id
+    if (-not $ghExe) {
+      Write-Warning "GitHub CLI (gh) not found; skipping Project post. Install gh or add it to PATH."
+      return
     }
-    if (-not $projectId) { throw "Could not resolve project id for $Owner / $ProjectNumber." }
 
-    # Create Draft Issue (Project note card)
-    $createMutation = @"
-mutation CreateDraft(\$projectId:ID!, \$title:String!, \$body:String!) {
-  createProjectV2DraftIssue(input:{projectId:\$projectId, title:\$title, body:\$body}) {
+    # Resolve project id via number OR title under user/org
+    $projectId = Get-ProjectV2Id -OwnerLogin $Owner -Number $ProjectNumber -Title $ProjectTitle -GhExe $ghExe
+    if (-not $projectId) {
+      throw "Could not resolve ProjectV2 id for owner '$Owner' (number=$ProjectNumber, title='$ProjectTitle')."
+    }
+
+    # --- Create Draft Issue (Project note card) ---
+    $createMutation = @'
+mutation CreateDraft($projectId:ID!, $title:String!, $body:String!) {
+  createProjectV2DraftIssue(input:{projectId:$projectId, title:$title, body:$body}) {
     projectItem { id }
     draftIssue { id }
   }
 }
-"@
+'@
 
     $tmpBody = New-TemporaryFile
     try {
       $body | Out-File -LiteralPath $tmpBody -Encoding UTF8
-      $createRaw = gh api graphql `
+      $createRaw = & $ghExe api graphql `
         -f query="$createMutation" `
         -f projectId="$projectId" `
         -f title="$Title" `
@@ -177,9 +300,9 @@ mutation CreateDraft(\$projectId:ID!, \$title:String!, \$body:String!) {
     if ($projectItemId) { $projectItemId | Out-File -LiteralPath $lastItemPath -Encoding ASCII }
     if ($draftIssueId)  { $draftIssueId  | Out-File -LiteralPath $lastDraftPath -Encoding ASCII }
 
-    Write-Host "✅ Posted snapshot as Draft item to Project #$ProjectNumber (Owner=$Owner)"
-    Write-Host "   Project Item ID saved to: $lastItemPath"
-    Write-Host "   Draft Issue ID  saved to: $lastDraftPath"
+    Write-Host "Posted snapshot as Draft item to Project (Owner=$Owner)"
+    Write-Host "  Project Item ID -> $lastItemPath"
+    Write-Host "  Draft Issue ID  -> $lastDraftPath"
   }
 
 } finally {
