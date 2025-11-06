@@ -1,55 +1,45 @@
 # tools/snapshot.ps1
-# Creates a progress snapshot and updates a GitHub Project v2 Draft Issue by title.
-# Requirements: gh CLI logged in, Python (for validator), git available (optional).
+# ------------------------------------------
+# FlowformLab Progress Snapshot
+# Creates tools\progress_snapshot.txt for local + project sync later
 
-param(
-  [string]$CardTitle = "Ghostwriter: connect n8n → Decap CMS (draft push)",  # which card/body to update
-  [switch]$Append                                                                      # append instead of replace
-)
+$ErrorActionPreference = "Stop"
+$now = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-# ---- CONSTANTS ----
-$OWNER    = "dermawas"
-$PROJ_NO  = 2
-$REPO     = (Resolve-Path ".").Path
-$OUTFILE  = Join-Path $REPO "tools\progress_snapshot.md"
-
-# ---- Helper: run a command safely and capture text ----
-function Run-Cmd([string]$Cmd, [switch]$Quiet) {
-  try {
-    $out = Invoke-Expression $Cmd 2>&1 | Out-String
-    if (-not $Quiet) { $out.Trim() }
-    else { return $out.Trim() }
-  } catch {
-    return ""
-  }
+# Determine repo root even when run manually
+$root = Split-Path -Parent $PSCommandPath
+if (-not $root) {
+  $root = Get-Location
 }
+Set-Location $root
 
-# ---- Section: front-matter validation (optional) ----
-$fmReport = ""
-$validator = Join-Path $REPO "tools\validate_frontmatter.py"
-if (Test-Path $validator) {
-  $fmReport = Run-Cmd "python `"$validator`""
-}
+$path = Join-Path $root "tools\progress_snapshot.txt"
 
-# ---- Section: git status (optional) ----
-$gitStatus = Run-Cmd "git status --porcelain=v1" -Quiet
-$gitLog    = Run-Cmd "git log -n 5 --pretty=format:'%h %ad %s' --date=short" -Quiet
+$data = @"
+=== FlowformLab Progress Snapshot ===
+Timestamp: $now
 
-# ---- Known constants we want to keep in one place ----
-$constants = @"
-- Repo path: `$REPO = $REPO
-- Owner / Project#: `$OWNER = $OWNER, `$PROJ_NO = $PROJ_NO
-- n8n model (local Ollama): **llama3.2:1b**
-- Validator entry point: tools/validate_frontmatter.py
-- Fixer entry point     : tools/fix_frontmatter.py
+Repo: D:\seno\GitHub\flowformlab\Repo\notes-site
+
+✅ Front-matter validator installed
+✅ Fixer script working
+✅ PowerShell validator wrapper works
+✅ Draft + Post templates validated
+
+⚙️ n8n Ghostwriter Status
+- Headings generator ✅
+- AI heading selector ⏳ (Node B JSON escape fix needed)
+- Heading normalizer ⏳ (after Node B)
+
+📌 Next Step
+Fix JSON payload in Node B to Ollama (llama3.2:1b)
+
+📝 Notes
+- Keep step-by-step method
+- Ask before modifying core templates or scripts
+
 "@
 
-# ---- Build snapshot markdown ----
-$ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss K")
-$md = @"
-# FlowformLab Snapshot — $ts
-
-## Constants
-$constants
-
-## Front-matter validator (latest run)
+# Write snapshot file
+Set-Content -Path $path -Value $data -Encoding UTF8
+Write-Host "Snapshot saved → $path ✅" -ForegroundColor Green
