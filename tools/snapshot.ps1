@@ -2,7 +2,7 @@
     FlowformLab Project Board Snapshot (PS5-safe + resilient)
     - Generates tools\progress_snapshot.txt with environment + (optional) git + validator summary
     - (Optional) Posts as a Draft item (note) to GitHub Project v2 via GraphQL
-    - Handles missing git/gh gracefully; resolves project id by number OR title
+    - Handles missing git/gh gracefully; resolves project id via `gh project list` by number OR title.
 
     Usage:
       .\snapshot.ps1
@@ -11,9 +11,9 @@
 
 [CmdletBinding()]
 param(
-  [string]$Owner            = "dermawas",
-  [int]   $ProjectNumber    = 2,
-  [string]$ProjectTitle     = "flowformlab.com backlog",   # fallback by title if number lookup fails
+  [string]$Owner            = "dermawas",                   # your GitHub username (personal account)
+  [int]   $ProjectNumber    = 2,                            # fallback: try by this number
+  [string]$ProjectTitle     = "flowformlab.com backlog",    # fallback: try by this title
   [string]$RepoPath         = "D:\seno\GitHub\flowformlab\Repo\notes-site",
   [string]$Title            = "FlowformLab Project Snapshot",
   [string]$ManualNotesPath  = "$PSScriptRoot\progress_manual.txt",
@@ -65,8 +65,8 @@ function Invoke-Git([string]$ArgsString) {
   }
 }
 
-# --- Helper: resolve ProjectV2 ID with fallbacks ---
-function Get-ProjectV2Id {
+# --- Helper: resolve ProjectV2 ID using `gh project list` first (user scope), then GraphQL ---
+function Get-UserProjectV2Id {
   param(
     [Parameter(Mandatory=$true)][string]$OwnerLogin,
     [Parameter(Mandatory=$true)][int]$Number,
@@ -74,21 +74,43 @@ function Get-ProjectV2Id {
     [Parameter(Mandatory=$true)][string]$GhExe
   )
 
-  # 1) Try USER: project by number
-  $qUserByNumber = @'
-query GetProjectId($owner:String!, $number:Int!) {
-  user(login: $owner) {
-    projectV2(number: $number) { id title number }
-  }
-}
-'@
-  $resp = & $GhExe api graphql -f query="$qUserByNumber" -f owner="$OwnerLogin" -F number=$Number | ConvertFrom-Json
-  if ($resp -and $resp.user -and $resp.user.projectV2 -and $resp.user.projectV2.id) {
-    return $resp.user.projectV2.id
+  # Try the CLI list (most reliable for user projects)
+  $listJson = $null
+  try {
+    $listJson = & $GhExe project list --owner "$OwnerLogin" --format json 2>$null
+  } catch { }
+
+  $matchedNumber = $null
+  if ($listJson) {
+    try {
+      $projects = $listJson | ConvertFrom-Json
+      # projects fields usually: number, title, url
+      # 1) exact number
+      $pByNum = $projects | Where-Object { $_.number -eq $Number } | Select-Object -First 1
+      # 2) exact title
+      $pByTitle = $projects | Where-Object { $_.title -eq $Title } | Select-Object -First 1
+      # 3) contains match
+      if (-not $pByTitle) {
+        $pByTitle = $projects | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1
+      }
+
+      if ($pByNum) { $matchedNumber = $pByNum.number }
+      elseif ($pByTitle) { $matchedNumber = $pByTitle.number }
+
+      if (-not $matchedNumber -and $projects) {
+        Write-Host "Diagnostics: Projects visible for user '$OwnerLogin':"
+        $projects | ForEach-Object { Write-Host (" - #{0}: {1}" -f $_.number, $_.title) }
+      }
+    } catch {
+      Write-Host "Warning: could not parse 'gh project list' JSON: $($_.Exception.Message)"
+    }
+  } else {
+    Write-Host "Warning: 'gh project list --owner $OwnerLogin' returned no output (older gh? not authenticated?)."
   }
 
-  # 2) Try USER: list by title
-  $qUserList = @'
+  # If we still don't know the number, try GraphQL enumerate user projects
+  if (-not $matchedNumber) {
+    $qUserList = @'
 query ListProjects($owner:String!) {
   user(login: $owner) {
     projectsV2(first: 50) {
@@ -97,45 +119,43 @@ query ListProjects($owner:String!) {
   }
 }
 '@
-  $resp = & $GhExe api graphql -f query="$qUserList" -f owner="$OwnerLogin" | ConvertFrom-Json
-  if ($resp -and $resp.user -and $resp.user.projectsV2 -and $resp.user.projectsV2.nodes) {
-    $match = $resp.user.projectsV2.nodes | Where-Object { $_.title -eq $Title } | Select-Object -First 1
-    if (-not $match) {
-      $match = $resp.user.projectsV2.nodes | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1
+    try {
+      $resp = & $GhExe api graphql -f query="$qUserList" -f owner="$OwnerLogin" | ConvertFrom-Json
+      if ($resp -and $resp.user -and $resp.user.projectsV2 -and $resp.user.projectsV2.nodes) {
+        $uNodes = $resp.user.projectsV2.nodes
+        $byNum = $uNodes | Where-Object { $_.number -eq $Number } | Select-Object -First 1
+        $byTitle = $uNodes | Where-Object { $_.title -eq $Title } | Select-Object -First 1
+        if (-not $byTitle) { $byTitle = $uNodes | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1 }
+        if ($byNum) { $matchedNumber = $byNum.number }
+        elseif ($byTitle) { $matchedNumber = $byTitle.number }
+
+        if (-not $matchedNumber) {
+          Write-Host "Diagnostics (GraphQL user projects for '$OwnerLogin'):"
+          $uNodes | ForEach-Object { Write-Host (" - #{0}: {1}" -f $_.number, $_.title) }
+        }
+      }
+    } catch {
+      Write-Host "Warning: GraphQL user project listing error: $($_.Exception.Message)"
     }
-    if ($match -and $match.id) { return $match.id }
   }
 
-  # 3) Try ORG: project by number
-  $qOrgByNumber = @'
-query GetProjectIdOrg($owner:String!, $number:Int!) {
-  organization(login: $owner) {
+  if (-not $matchedNumber) { return $null }
+
+  # Once we have the number, get the node id via GraphQL
+  $qUserByNumber = @'
+query GetProjectId($owner:String!, $number:Int!) {
+  user(login: $owner) {
     projectV2(number: $number) { id title number }
   }
 }
 '@
-  $resp = & $GhExe api graphql -f query="$qOrgByNumber" -f owner="$OwnerLogin" -F number=$Number | ConvertFrom-Json
-  if ($resp -and $resp.organization -and $resp.organization.projectV2 -and $resp.organization.projectV2.id) {
-    return $resp.organization.projectV2.id
-  }
-
-  # 4) Try ORG: list by title
-  $qOrgList = @'
-query ListProjectsOrg($owner:String!) {
-  organization(login: $owner) {
-    projectsV2(first: 50) {
-      nodes { id title number }
+  try {
+    $resp = & $GhExe api graphql -f query="$qUserByNumber" -f owner="$OwnerLogin" -F number=$matchedNumber | ConvertFrom-Json
+    if ($resp -and $resp.user -and $resp.user.projectV2 -and $resp.user.projectV2.id) {
+      return $resp.user.projectV2.id
     }
-  }
-}
-'@
-  $resp = & $GhExe api graphql -f query="$qOrgList" -f owner="$OwnerLogin" | ConvertFrom-Json
-  if ($resp -and $resp.organization -and $resp.organization.projectsV2 -and $resp.organization.projectsV2.nodes) {
-    $match = $resp.organization.projectsV2.nodes | Where-Object { $_.title -eq $Title } | Select-Object -First 1
-    if (-not $match) {
-      $match = $resp.organization.projectsV2.nodes | Where-Object { $_.title -like "*$Title*" } | Select-Object -First 1
-    }
-    if ($match -and $match.id) { return $match.id }
+  } catch {
+    Write-Host "Warning: GraphQL fetch by number failed: $($_.Exception.Message)"
   }
 
   return $null
@@ -265,8 +285,8 @@ Warnings: $warns
       return
     }
 
-    # Resolve project id via number OR title under user/org
-    $projectId = Get-ProjectV2Id -OwnerLogin $Owner -Number $ProjectNumber -Title $ProjectTitle -GhExe $ghExe
+    # Resolve project id via CLI list and/or GraphQL user listing
+    $projectId = Get-UserProjectV2Id -OwnerLogin $Owner -Number $ProjectNumber -Title $ProjectTitle -GhExe $ghExe
     if (-not $projectId) {
       throw "Could not resolve ProjectV2 id for owner '$Owner' (number=$ProjectNumber, title='$ProjectTitle')."
     }
