@@ -1,0 +1,8 @@
+llama32_1b:
+  name: "Ghostwriter (llama3.2:1b)"
+  bio: "AI Ghostwriter running on Ollama (model: llama3.2:1b)."
+  avatar: /assets/images/authors/llama32_1b.png # optional; remove if you don’t have it yet
+  links:
+    - label: "Model"
+      icon: "fas fa-robot"
+      url: "#"
