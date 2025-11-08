@@ -84,28 +84,11 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-          # CHANGED: normal Published toggle for editorial workflow (default false)
-          - label: "Published"
+          - label: "Force unpublish (published:false)"
             name: "published"
             widget: "boolean"
-            default: false
+            default: true
             required: false
-
-  # -------------------------
-  # DRAFTS (folder-based)
-  # -------------------------
-  - name: "drafts"
-    label: "Drafts"
-    folder: "_drafts"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      # Keep it simple for drafts; date comes when publishing to _posts
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Description", name: "description", widget: "text", required: false }
-      - { label: "Categories", name: "categories", widget: "list", default: ["automation","ai","notebook"] }
-      - { label: "Tags", name: "tags", widget: "list", required: false, default: ["n8n","ollama","decap cms","jekyll","flowformlab"] }
-      - { label: "Body", name: "body", widget: "markdown" }
 
   # -------------------------
   # PAGES (file-based: About, Contact)
