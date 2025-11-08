@@ -84,10 +84,11 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-          - label: "Force unpublish (published:false)"
+          # CHANGED: normal Published toggle for editorial workflow (default false)
+          - label: "Published"
             name: "published"
             widget: "boolean"
-            default: true
+            default: false
             required: false
 
   # -------------------------
