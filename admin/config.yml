@@ -7,6 +7,8 @@ backend:
 
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
+
+# Keep editorial workflow – we want Draft → Ready → Publish Now
 publish_mode: editorial_workflow
 
 media_folder: "assets/uploads"
@@ -84,11 +86,11 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-          # CHANGED: normal Published toggle for editorial workflow (default false)
-          - label: "Published"
+          # Back to original behaviour: this only forces unpublish if you flip it
+          - label: "Force unpublish (published:false)"
             name: "published"
             widget: "boolean"
-            default: false
+            default: true
             required: false
 
   # -------------------------
