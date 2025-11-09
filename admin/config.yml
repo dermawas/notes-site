@@ -8,8 +8,9 @@ backend:
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
 
-# We want Draft → Ready → Publish Now
-publish_mode: editorial_workflow
+# Simple mode: no editorial workflow board; Save commits directly.
+# (Jekyll 'published' flag controls whether the post is live.)
+# publish_mode: editorial_workflow
 
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
