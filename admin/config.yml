@@ -9,7 +9,7 @@ site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
 
 # Simple mode: no editorial workflow board; Save commits directly.
-# (Jekyll 'published' flag controls whether the post is live.)
+# Jekyll 'published' flag controls whether the post is live.
 # publish_mode: editorial_workflow
 
 media_folder: "assets/uploads"
@@ -76,6 +76,13 @@ collections:
       # Content
       - { label: "Body", name: "body", widget: "markdown" }
 
+      # Publish flag (this controls top-level `published:` in front matter)
+      - label: "Published (site live)"
+        name: "published"
+        widget: "boolean"
+        default: true
+        required: false
+
       # Advanced (rarely needed)
       - label: "Advanced"
         name: "advanced"
@@ -87,11 +94,6 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-          - label: "Published (site live)"
-            name: "published"
-            widget: "boolean"
-            default: true
-            required: false
 
   # -------------------------
   # PAGES (file-based)
