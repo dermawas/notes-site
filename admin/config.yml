@@ -86,7 +86,7 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-          - label: "Force unpublish (published:false)"
+          - label: "Published (site live)"
             name: "published"
             widget: "boolean"
             default: true
