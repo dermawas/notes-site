@@ -1,13 +1,20 @@
 ---
-layout: single
-title: "Cloudflare Tunnel and Nginx Proxy"
-description: "A brief summary of the topic."
-date: 2025-11-09T03:56:39.154Z
-categories: ["automation", "ai", "notebook"]
-tags: ["n8n", "ollama", "decap cms", "flowformlab"]
-published: false
 toc: false
+layout: single
 author: llama32_1b
+title: Cloudflare Tunnel and Nginx Proxy
+date: 2025-11-09T03:56:39.154Z
+categories:
+  - automation
+  - ai
+  - notebook
+tags:
+  - n8n
+  - ollama
+  - decap cms
+  - flowformlab
+description: A brief summary of the topic.
+published: true
 author_profile: true
 ---
 
