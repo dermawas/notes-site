@@ -8,7 +8,7 @@ backend:
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
 
-# Keep editorial workflow – we want Draft → Ready → Publish Now
+# We want Draft → Ready → Publish Now
 publish_mode: editorial_workflow
 
 media_folder: "assets/uploads"
@@ -30,7 +30,7 @@ collections:
       - label: "Publish date"
         name: "date"
         widget: "datetime"
-        format: "YYYY-MM-DD HH:mm:ss Z"   # Jekyll-friendly with timezone
+        format: "YYYY-MM-DD HH:mm:ss Z"
       - { label: "Categories", name: "categories", widget: "list", default: ["notes"] }
       - { label: "Tags", name: "tags", widget: "list", required: false }
 
@@ -86,15 +86,26 @@ collections:
           - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
           - { label: "CSS classes", name: "classes", widget: "string", required: false }
           - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
-<<<<<<< HEAD
-          # Back to original behaviour: this only forces unpublish if you flip it
-=======
->>>>>>> d094e028c662af3e7e8263fa40c090368f01ec58
           - label: "Force unpublish (published:false)"
             name: "published"
             widget: "boolean"
             default: true
             required: false
+
+  # -------------------------
+  # DRAFTS (folder-based)
+  # -------------------------
+  - name: "drafts"
+    label: "Drafts"
+    folder: "_drafts"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Categories", name: "categories", widget: "list", default: ["automation","ai","notebook"] }
+      - { label: "Tags", name: "tags", widget: "list", required: false, default: ["n8n","ollama","decap cms","jekyll","flowformlab"] }
+      - { label: "Body", name: "body", widget: "markdown" }
 
   # -------------------------
   # PAGES (file-based: About, Contact)
