@@ -1,22 +1,6 @@
-backend:
-  name: github
-  repo: dermawas/notes-site
-  branch: main
-  base_url: https://ffl-oauth.vercel.app
-  auth_endpoint: /api/auth
-
-site_url: https://flowformlab.com
-logo_url: /assets/images/logo-ffl-spark.svg
-
-# We want Draft → Ready → Publish Now
-publish_mode: editorial_workflow
-
-media_folder: "assets/uploads"
-public_folder: "/assets/uploads"
-
 collections:
   # -------------------------
-  # POSTS (folder-based)
+  # POSTS (folder-based only)
   # -------------------------
   - name: "posts"
     label: "Posts"
@@ -93,22 +77,7 @@ collections:
             required: false
 
   # -------------------------
-  # DRAFTS (folder-based)
-  # -------------------------
-  - name: "drafts"
-    label: "Drafts"
-    folder: "_drafts"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Description", name: "description", widget: "text", required: false }
-      - { label: "Categories", name: "categories", widget: "list", default: ["automation","ai","notebook"] }
-      - { label: "Tags", name: "tags", widget: "list", required: false, default: ["n8n","ollama","decap cms","jekyll","flowformlab"] }
-      - { label: "Body", name: "body", widget: "markdown" }
-
-  # -------------------------
-  # PAGES (file-based: About, Contact)
+  # PAGES (file-based)
   # -------------------------
   - name: "pages"
     label: "Pages"
