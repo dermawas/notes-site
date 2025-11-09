@@ -1,3 +1,19 @@
+backend:
+  name: github
+  repo: dermawas/notes-site
+  branch: main
+  base_url: https://ffl-oauth.vercel.app
+  auth_endpoint: /api/auth
+
+site_url: https://flowformlab.com
+logo_url: /assets/images/logo-ffl-spark.svg
+
+# We want Draft → Ready → Publish Now
+publish_mode: editorial_workflow
+
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
 collections:
   # -------------------------
   # POSTS (folder-based only)
