@@ -1,20 +1,20 @@
 ---
-layout: single
-title: The Constitution of the United Rational Collective - When imagination runs wild
+toc_sticky: true
+title: When imagination runs wild
 date: 2025-11-30 14:16:00 +07:00
 categories:
   - notes
 tags:
   - fictions
 excerpt: ""
-description: scifi
 toc: false
-toc_label: Sections
-toc_sticky: true
-published: true
 advanced:
   layout: single
   author_profile: false
+layout: single
+description: scifi
+toc_label: Sections
+published: true
 ---
 
 # The Constitution of the United Rational Collective  
