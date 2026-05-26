@@ -1,21 +1,9 @@
 main:
   - title: "Notes"
     url: /
-    # ------------------------------------------------------------
-    # IMPORTANT: The children below create a dropdown menu.
-    # These only work if the category pages physically exist in
-    # your repo (e.g. _pages/category-patterns.md with
-    # layout: category and the matching permalink).
-    #
-    # If /category/patterns/ and /category/risk don't exist yet,
-    # REMOVE the children block for now to avoid 404 links.
-    # We can add them back once the pages are created.
-    # ------------------------------------------------------------
-    children:
-      - title: "Patterns"
-        url: /category/patterns/
-      - title: "Risks"
-        url: /category/risk/   # fixed: added trailing slash for consistency
+
+  - title: "Fiction"
+    url: /fiction/
 
   - title: "About"
     url: /about/
