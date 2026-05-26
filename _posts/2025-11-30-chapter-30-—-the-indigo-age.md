@@ -2,15 +2,12 @@
 title: Chapter 30 — The Indigo Age
 date: 2025-11-30 15:59:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 *Epilogue*
 

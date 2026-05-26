@@ -3,14 +3,11 @@ toc_sticky: true
 title: When imagination runs wild
 date: 2025-11-30 14:16:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - fictions
 excerpt: ""
 toc: false
-advanced:
-  layout: single
-  author_profile: false
 layout: single
 description: scifi
 toc_label: Sections

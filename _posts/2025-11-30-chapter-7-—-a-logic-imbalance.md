@@ -2,15 +2,12 @@
 title: Chapter 7 — A Logic Imbalance
 date: 2025-11-30 15:08:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 Kael had seen Lira shaken.  
 He had seen her overwhelmed, frustrated, annoyed, tangled in emotion.

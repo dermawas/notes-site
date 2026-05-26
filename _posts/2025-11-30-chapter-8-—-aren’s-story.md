@@ -2,15 +2,12 @@
 title: Chapter 8 — Aren’s Story
 date: 2025-11-30 15:10:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The Integration Ward’s windows dimmed automatically as the lattice flare subsided, but the afterglow still shimmered across the sky like a fading aurora. The Collective had felt it. Every citizen. Every CU.
 

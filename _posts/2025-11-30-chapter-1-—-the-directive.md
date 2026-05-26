@@ -2,15 +2,12 @@
 title: Chapter 1 — The Directive
 date: 2025-11-30 14:31:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - URC
 description: United Rational Collective URC
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 
 Lira had always imagined that the moment would feel heavier—louder somehow, like the crack of a new world opening. Instead, it arrived in perfect silence.

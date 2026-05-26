@@ -2,15 +2,12 @@
 title: Chapter 16 — The Violet District
 date: 2025-11-30 15:26:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The Violet District had once been an ordinary research quarter — calm, academic, filled with quiet laboratories and learning halls.
 

@@ -2,15 +2,12 @@
 title: Chapter 21 — Resonance Break
 date: 2025-11-30 15:36:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The moment Lira’s words left her mouth—  
 **“We choose to exist together.”**  

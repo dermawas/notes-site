@@ -13,9 +13,6 @@ description: Automate your Mikrotik with Telegram commands! See how we used
   automation.
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 
 

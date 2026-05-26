@@ -2,15 +2,12 @@
 title: Chapter 11 — The First Question
 date: 2025-11-30 15:16:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 Glass didn’t shatter in the Collective.
 

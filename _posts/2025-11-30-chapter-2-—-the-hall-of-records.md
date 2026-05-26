@@ -2,14 +2,11 @@
 title: Chapter 2 — The Hall of Records
 date: 2025-11-30 14:40:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - THE UNITED RATIONAL COLLECTIVE (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The Hall of Records did not look like a building.
 

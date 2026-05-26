@@ -2,14 +2,11 @@
 title: Chapter 3 — The Custodian
 date: 2025-11-30 14:50:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 Custodian Seris always struck Lira as someone carved out of stillness.
 

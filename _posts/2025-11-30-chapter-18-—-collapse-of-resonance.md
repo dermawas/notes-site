@@ -2,15 +2,12 @@
 title: Chapter 18 — Collapse of Resonance
 date: 2025-11-30 15:30:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The world didn’t fade back all at once.
 

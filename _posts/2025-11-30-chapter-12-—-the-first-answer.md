@@ -2,15 +2,12 @@
 title: Chapter 12 — The First Answer
 date: 2025-11-30 15:18:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The question echoed through every corner of the Collective.
 

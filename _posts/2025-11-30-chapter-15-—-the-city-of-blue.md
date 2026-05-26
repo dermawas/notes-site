@@ -2,15 +2,12 @@
 title: Chapter 15 — The City of Blue
 date: 2025-11-30 15:25:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The Stabilist district lay at the heart of the Collective—  
 a concentric ring of immaculate architecture, disciplined movement, balanced symmetry.

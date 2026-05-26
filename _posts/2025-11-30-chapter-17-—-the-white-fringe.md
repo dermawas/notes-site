@@ -2,15 +2,12 @@
 title: Chapter 17 — The White Fringe
 date: 2025-11-30 15:28:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 The White Fringe was nothing like the City of Blue  
 or the Violet District.

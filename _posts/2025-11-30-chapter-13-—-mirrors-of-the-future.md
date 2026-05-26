@@ -2,15 +2,12 @@
 title: Chapter 13 — Mirrors of the Future
 date: 2025-11-30 15:21:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 **_WHAT WILL YOU BECOME?_**
 

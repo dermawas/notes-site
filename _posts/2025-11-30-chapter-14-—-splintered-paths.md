@@ -2,15 +2,12 @@
 title: Chapter 14 — Splintered Paths
 date: 2025-11-30 15:23:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 
 Citywide, the question pulsed:

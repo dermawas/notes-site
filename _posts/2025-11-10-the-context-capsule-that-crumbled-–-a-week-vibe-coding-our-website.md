@@ -8,9 +8,6 @@ tags:
 description: vibe coding, AI, chatgpt 5
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 
 

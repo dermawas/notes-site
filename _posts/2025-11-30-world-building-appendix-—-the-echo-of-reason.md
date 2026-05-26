@@ -2,15 +2,12 @@
 title: World-Building Appendix — *The Echo of Reason*
 date: 2025-11-30 16:05:00 +07:00
 categories:
-  - notes
+  - fiction
 tags:
   - The United Rational Collective (URC)
 description: The United Rational Collective (URC)
 toc: false
 published: true
-advanced:
-  layout: single
-  author_profile: false
 ---
 ## 1. Constitution of the Indigo Age
 The Indigo Age is founded on the Three Axioms:
