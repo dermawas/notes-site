@@ -24,7 +24,7 @@ logo: "/assets/images/logo-ffl-spark-dark.svg"
 # ------------------------------------------------------------
 author:
   name: "Archiles"
-  avatar: "/assets/images/authors/YOUR_FILE.jpg"  # ← UPDATE THIS
+  avatar: "/assets/images/authors/llama32_1b.png"
   bio: "Notes on systems, tools, and the process of figuring things out — mostly for myself."
   links:
     - label: "Email"
