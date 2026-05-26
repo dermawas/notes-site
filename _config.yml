@@ -1,22 +1,68 @@
 title: "FlowformLab"
 tagline: "Notes on systems, tools, and the process of figuring things out (mostly for myself)."
-description: "FlowformLab is a personal journal on how things work — and how to make them work better (or at least, better for me). It’s my working log—part notes, part diagrams, part reflection—where I trace ideas as they flow, form, and evolve."
+description: "FlowformLab is a personal journal on how things work — and how to make them work better (or at least, better for me). It's my working log—part notes, part diagrams, part reflection—where I trace ideas as they flow, form, and evolve."
 email: spark@flowformlab.com
 
 url: https://flowformlab.com
 baseurl: ""          # keep empty for apex domain
 
+# ------------------------------------------------------------
+# Theme skin — changed from default to dark
+# ------------------------------------------------------------
+minimal_mistakes_skin: "dark"
+
+# ------------------------------------------------------------
+# Site logo (shown in top-left header next to title)
+# Uses the dark-variant SVG logo already in the repo
+# ------------------------------------------------------------
+logo: "/assets/images/logo-ffl-spark-dark.svg"
+
+# ------------------------------------------------------------
+# Author — shown in sidebar when author_profile: true
+# NOTE: Replace "authors/YOUR_FILE.jpg" with the actual
+#       filename inside your assets/images/authors/ folder
+# ------------------------------------------------------------
+author:
+  name: "Archiles"
+  avatar: "/assets/images/authors/YOUR_FILE.jpg"  # ← UPDATE THIS
+  bio: "Notes on systems, tools, and the process of figuring things out — mostly for myself."
+  links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: "mailto:spark@flowformlab.com"
+    - label: "Feed"
+      icon: "fas fa-fw fa-rss-square"
+      url: "/feed.xml"
+
+# ------------------------------------------------------------
 # Time & publishing config
+# ------------------------------------------------------------
 timezone: Asia/Jakarta
 future: true   # allow posts with future timestamps to appear
 
+# ------------------------------------------------------------
+# Search — enables the built-in Lunr search
+# ------------------------------------------------------------
+search: true
+
+# ------------------------------------------------------------
+# Pagination — limits homepage to 10 posts per page
+# Prevents the 30+ chapter dump from flooding the index
+# Requires jekyll-paginate plugin (GitHub Pages compatible)
+# ------------------------------------------------------------
+paginate: 10
+paginate_path: "/page:num/"
+
+# ------------------------------------------------------------
 # Theme & plugins
+# ------------------------------------------------------------
 remote_theme: mmistakes/minimal-mistakes
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-include-cache
   - jekyll-sitemap
+  - jekyll-paginate   # ← added for pagination
 
 # ------------------------------------------------------------
 # Default settings for new posts and pages
@@ -28,5 +74,6 @@ defaults:
       type: posts
     values:
       layout: single
-      author_profile: false
-      read_time: false
+      author_profile: true   # ← changed from false — shows Archiles sidebar
+      read_time: true        # ← enabled — gives a sense of post length at a glance
+      show_date: true        # ← shows publish date under post title
