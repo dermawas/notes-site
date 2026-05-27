@@ -8,8 +8,8 @@ backend:
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
 
-# Simple mode: no editorial workflow board; Save commits directly.
-# Jekyll 'published' flag controls whether the post is live.
+# Simple mode: Save commits directly to GitHub.
+# The `published` toggle controls Jekyll visibility.
 # publish_mode: editorial_workflow
 
 media_folder: "assets/uploads"
@@ -40,7 +40,7 @@ collections:
         name: "excerpt"
         widget: "text"
         required: false
-        hint: "1–2 sentences. Shown on lists and in metadata."
+        hint: "1-2 sentences. Shown on lists and in metadata."
       - label: "SEO Description"
         name: "description"
         widget: "text"
@@ -56,7 +56,7 @@ collections:
         fields:
           - { label: "Featured image", name: "overlay_image", widget: "image", required: false }
           - { label: "Image caption (Markdown OK)", name: "caption", widget: "string", required: false }
-          - label: "Overlay filter (0–1)"
+          - label: "Overlay filter (0-1)"
             name: "overlay_filter"
             widget: "number"
             value_type: "float"
@@ -76,24 +76,15 @@ collections:
       # Content
       - { label: "Body", name: "body", widget: "markdown" }
 
-      # Publish flag (this controls top-level `published:` in front matter)
+      # Publish flag
+      # OFF (default) = saved to GitHub as draft, not visible on site
+      # ON = post goes live when you click Publish
       - label: "Published (site live)"
         name: "published"
         widget: "boolean"
-        default: true
+        default: false
         required: false
-
-      # Advanced (rarely needed)
-      - label: "Advanced"
-        name: "advanced"
-        widget: "object"
-        collapsed: true
-        required: false
-        fields:
-          - { label: "Layout", name: "layout", widget: "string", default: "single", required: false }
-          - { label: "Author profile (sidebar)", name: "author_profile", widget: "boolean", default: false, required: false }
-          - { label: "CSS classes", name: "classes", widget: "string", required: false }
-          - { label: "Permalink (optional)", name: "permalink", widget: "string", required: false }
+        hint: "Turn ON to make this post visible, then click Publish."
 
   # -------------------------
   # PAGES (file-based)
@@ -117,7 +108,7 @@ collections:
             fields:
               - { label: "Featured image", name: "overlay_image", widget: "image", required: false }
               - { label: "Image caption (Markdown OK)", name: "caption", widget: "string", required: false }
-              - label: "Overlay filter (0–1)"
+              - label: "Overlay filter (0-1)"
                 name: "overlay_filter"
                 widget: "number"
                 value_type: "float"
@@ -144,7 +135,7 @@ collections:
             fields:
               - { label: "Featured image", name: "overlay_image", widget: "image", required: false }
               - { label: "Image caption (Markdown OK)", name: "caption", widget: "string", required: false }
-              - label: "Overlay filter (0–1)"
+              - label: "Overlay filter (0-1)"
                 name: "overlay_filter"
                 widget: "number"
                 value_type: "float"
