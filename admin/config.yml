@@ -4,6 +4,7 @@ backend:
   branch: main
   base_url: https://ffl-oauth.vercel.app
   auth_endpoint: /api/auth
+# v2
 
 site_url: https://flowformlab.com
 logo_url: /assets/images/logo-ffl-spark.svg
