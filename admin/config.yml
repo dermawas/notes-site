@@ -26,6 +26,14 @@ collections:
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     preview_path: "{{year}}/{{month}}/{{day}}/{{slug}}/"
     fields:
+      # --- Draft control: top of form ---
+      - label: "Published (site live)"
+        name: "published"
+        widget: "boolean"
+        default: false
+        required: false
+        hint: "OFF = draft (not visible). ON = live on site when you click Publish."
+
       # Basics
       - { label: "Title", name: "title", widget: "string" }
       - label: "Publish date"
@@ -75,16 +83,6 @@ collections:
 
       # Content
       - { label: "Body", name: "body", widget: "markdown" }
-
-      # Publish flag
-      # OFF (default) = saved to GitHub as draft, not visible on site
-      # ON = post goes live when you click Publish
-      - label: "Published (site live)"
-        name: "published"
-        widget: "boolean"
-        default: false
-        required: false
-        hint: "Turn ON to make this post visible, then click Publish."
 
   # -------------------------
   # PAGES (file-based)
