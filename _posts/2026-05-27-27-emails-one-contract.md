@@ -1,5 +1,5 @@
 ---
-title: "27 Emails, One Contract, and the Clause I'm Still Watching"
+title: 27 Emails, One Contract, and the Clause I'm Still Watching
 date: 2026-05-27 08:00:00 +07:00
 categories:
   - notes
@@ -9,10 +9,12 @@ tags:
   - independent contractor
   - cross-border
   - lessons learned
-description: "What a 27-email contract negotiation taught me about cross-border freelancing, pay-when-paid clauses, and the questions you should ask before you sign."
+description: What a 27-email contract negotiation taught me about cross-border
+  freelancing, pay-when-paid clauses, and the questions you should ask before
+  you sign.
 toc: true
-toc_label: "Sections"
-published: false
+toc_label: Sections
+published: true
 ---
 
 It took 27 emails and roughly five weeks to go from a first document review to the word *accepted*.
