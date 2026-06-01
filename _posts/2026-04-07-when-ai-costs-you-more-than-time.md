@@ -17,9 +17,9 @@ author: "Archiles"
 
 ## Background
 
-This article is part of a larger story about building a private infrastructure hub on OCI Always Free. If you want the full picture of what I built and why, start here: [The Accidental Platform: How One Free Server Grew Into a Private Infrastructure Hub →](/notes/2026/06/01/the-accidental-platform-how-one-free-server-grew-into-a-private-infrastructure-hub/)
+I have been building a private infrastructure hub on an OCI Always Free VM — WireGuard, L2TP/IPSec, self-hosted password vault, accounting, DNS, monitoring. The full story of how that came together is in a separate piece written later, once the build was complete: [The Accidental Platform →](/notes/2026/06/01/the-accidental-platform-how-one-free-server-grew-into-a-private-infrastructure-hub/)
 
-The short version: I have two physical sites connected through an OCI VM running WireGuard and L2TP/IPSec. Getting there involved a mistake I want to document honestly.
+This article is about one specific chapter of that journey — the one that went wrong. I'm writing it while it's still fresh.
 
 ---
 
@@ -97,7 +97,7 @@ Site A ──L2TP──► OCI ◄──L2TP── Site B
            Remote devices
 ```
 
-I configured it. It worked in under an hour.
+With ChatGPT's help — this time on a design I had chosen myself — I configured the OCI side and both routers. It connected. The difference wasn't the AI. It was the architecture.
 
 ---
 
@@ -202,7 +202,5 @@ That one question would have saved me two weeks and a holiday in traffic.
 ---
 
 *This article is part of the OCI infrastructure series:*
-- *[The Accidental Platform →](/notes/2026/06/01/the-accidental-platform-how-one-free-server-grew-into-a-private-infrastructure-hub/)* — the full infrastructure build and product thinking evolution
+- *[The Accidental Platform →](/notes/2026/06/01/the-accidental-platform-how-one-free-server-grew-into-a-private-infrastructure-hub/)* — the full infrastructure build, written after everything was complete
 - *[The AI Architect: Wrestling ChatGPT into Building a Robust Telegram-to-MikroTik Workflow →](/notes/2025/11/21/the-ai-architect-wrestling-chatgpt-into-building-a-robust-telegram-to-mikrotik-workflow/)* — building the Telegram control system
-
-*Technical reference:* [OCI VPN Hub — Technical Reference](https://github.com/dermawas/OCI-Docs/blob/main/OCI-VPN-Hub-Public.md)
