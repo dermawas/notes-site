@@ -128,6 +128,8 @@ The full story of building that Telegram bot is here: [The AI Architect: Wrestli
 
 ---
 
+A note on tooling: most of this was built with AI assistance — primarily ChatGPT early on, and increasingly Claude as the project matured. The free tier limits on both make development slower than it needs to be, but the cost-to-output ratio is still remarkable. More on that in the companion piece.
+
 ## The pattern: reuse over buy
 
 Looking back, the same thing happened every time:
@@ -192,8 +194,6 @@ The only time I forgot it, I lost two weeks and a holiday in traffic.
 Now I don't forget.
 
 ---
-
-*Technical reference (full configs, scripts, IP assignments):* [OCI VPN Hub — Technical Reference](https://github.com/dermawas/OCI-Docs/blob/main/OCI-VPN-Hub-Public.md)
 
 *The AI lesson in full:* [When ChatGPT Cost Me Two Weeks and a Holiday in Traffic →](/notes/2026/04/07/when-ai-costs-you-more-than-time/)
 
