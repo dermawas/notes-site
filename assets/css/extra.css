@@ -1,7 +1,6 @@
 /* Optional minimal extras specific to Minimal Mistakes */
 .mm-page__title, .page__title, .post-title { letter-spacing: .1px; }
 blockquote { font-style: italic; }
-
 .masthead__inner-wrap {
   align-items: center;
 }
@@ -10,15 +9,85 @@ blockquote { font-style: italic; }
   margin-right: .35rem;
   opacity: 0.9;
 }
-
 .site-logo img:hover {
   opacity: 1;
 }
 /* --- Dark mode logo switch --- */
 @media (prefers-color-scheme: dark) {
-  /* Swap to dark logo automatically */
   .site-logo img {
     content: url("/assets/images/logo-ffl-spark-dark.svg");
     opacity: .98;
   }
+}
+
+/* ── Hero block ─────────────────────────────────────────────── */
+.hero-block {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 3.5rem 0 3rem;
+  margin-bottom: 2.5rem;
+}
+.hero-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a9cc7;
+  margin: 0 0 0.75rem;
+}
+.hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+  color: #e8e6e1;
+  max-width: 600px;
+}
+.hero-sub {
+  font-size: 1rem;
+  color: #9b9890;
+  line-height: 1.7;
+  max-width: 520px;
+  margin: 0 0 1.75rem;
+}
+.hero-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.hero-btn-primary {
+  background: #7a9cc7;
+  color: #0d1117 !important;
+  padding: 0.55rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background 0.2s;
+}
+.hero-btn-primary:hover {
+  background: #9ab8d8;
+}
+.hero-btn-ghost {
+  color: #9b9890 !important;
+  font-size: 0.9rem;
+  text-decoration: none !important;
+  border-bottom: 1px solid rgba(155,152,144,0.35);
+  padding-bottom: 1px;
+}
+.hero-btn-ghost:hover {
+  color: #e8e6e1 !important;
+  border-color: rgba(232,230,225,0.4);
+}
+
+/* ── Posts section label ────────────────────────────────────── */
+.posts-section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a9cc7;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.5rem;
 }
