@@ -56,7 +56,7 @@ blockquote { font-style: italic; }
   align-items: center;
 }
 .hero-btn-primary {
-  background: #7a9cc7;
+  background: #2dd4bf;
   color: #0d1117 !important;
   padding: 0.55rem 1.2rem;
   border-radius: 6px;
@@ -66,7 +66,7 @@ blockquote { font-style: italic; }
   transition: background 0.2s;
 }
 .hero-btn-primary:hover {
-  background: #9ab8d8;
+  background: #5eead4;
 }
 .hero-btn-ghost {
   color: #9b9890 !important;
