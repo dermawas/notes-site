@@ -1,7 +1,7 @@
 ---
 layout: home
-title: "FlowformLab"
 author_profile: false
+classes: wide
 ---
 
 <div class="hero-block">
