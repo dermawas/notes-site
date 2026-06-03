@@ -4,10 +4,9 @@ title: "About FlowformLab"
 permalink: /about/
 description: "FlowformLab — a personal lab for systems, tinkering, reflection, and learning through doing."
 toc: false
-# Optional: make content area wider
-# classes: wide
+classes: wide
+author_profile: false
 ---
-
 **FlowformLab** is a personal journal on how things work — and how to make them work better (or at least, better *for me*).
 
 ## Why the name?
@@ -22,13 +21,13 @@ Together: **a space where ideas flow, take form, and evolve through experimentat
 
 ---
 
-It’s my working log — part notes, part diagrams, part reflection — a space to trace ideas as they flow, form, and evolve.
+It's my working log — part notes, part diagrams, part reflection — a space to trace ideas as they flow, form, and evolve.
 
 I write about what I learn while building, fixing, and understanding systems: digital, mechanical, and human.
 
-It’s not about perfection — it’s about curiosity, iteration, and making sense of what we build.
+It's not about perfection — it's about curiosity, iteration, and making sense of what we build.
 
-Sometimes it’s technical, sometimes reflective, always hands-on.
+Sometimes it's technical, sometimes reflective, always hands-on.
 
 ---
 
@@ -37,28 +36,27 @@ Sometimes it’s technical, sometimes reflective, always hands-on.
 FlowformLab also experiments with **AI as a thinking partner and drafting tool** — not to replace the human voice, but to extend it.
 
 Like any instrument in a lab, AI here is used with intention:
-
 - to explore ideas faster  
 - to prototype writing structures  
 - to turn scattered thoughts into first drafts  
 - to reflect back patterns and clarity  
 
 The **Ghostwriter workflow** — built with n8n and a local LLM — is part of this exploration.  
-It doesn’t “write for me.” It **helps me think**, then I shape, edit, and refine.
+It doesn't "write for me." It **helps me think**, then I shape, edit, and refine.
 
-This is not automation for efficiency’s sake.  
+This is not automation for efficiency's sake.  
 It is a study in **augmented creativity, mindful tooling, and human-first writing**.
 
 Sometimes the machine surprises me.  
 Sometimes it gets in the way.
 
-That’s the point — it’s an experiment.  
+That's the point — it's an experiment.  
 A lab is where tools are tested, assumptions are challenged, and craft evolves.
 
 ---
 
 ## 📬 Contact
 
-If you’d like to get in touch:
+Open to conversations about systems, tools, consulting, or anything that lives at the edge of structure and experimentation.
 
 - **Email:** [spark@flowformlab.com](mailto:spark@flowformlab.com)
