@@ -2,7 +2,7 @@
 title: Ways of Working with Chatgpt 5 (Chak)
 date: '2025-11-05 11:53:00+07:00'
 categories:
-  - fiction
+  - notes
 tags:
 - SDLC
 toc: false
