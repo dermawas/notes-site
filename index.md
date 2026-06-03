@@ -7,7 +7,7 @@ classes: wide
 <div class="hero-block">
   <p class="hero-label">Working log</p>
   <h1 class="hero-title">Systems, tools, and the process of figuring things out.</h1>
-  <p class="hero-sub">Infrastructure builds. Consulting war stories. AI experiments. A 30-chapter speculative novel. Written mostly for myself — but you're welcome here.</p>
+  <p class="hero-sub">A running record of infrastructure builds, consulting work, and AI experiments — documented as I go. Some of it is useful. Some of it is just me thinking out loud.</p>
 <div class="hero-links">
     <a href="/fiction/" class="hero-btn-primary">Read the fiction →</a>
   </div>
