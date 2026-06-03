@@ -1,0 +1,14 @@
+---
+layout: archive
+---
+{%- assign locale = page.locale | default: layout.locale | default: site.locale %}
+
+{{ content }}
+
+{% assign entries_layout = page.entries_layout | default: 'list' %}
+{% assign posts = site.categories[page.taxonomy] | where_exp: "post", "post.hidden != true" | sort: "date" %}
+<div class="entries-{{ entries_layout }}">
+  {%- for post in posts -%}
+    {% include archive-single.html locale=locale %}
+  {%- endfor -%}
+</div>
