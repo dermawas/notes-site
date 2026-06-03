@@ -1,5 +1,5 @@
 ---
-layout: category
+layout: fiction-index
 title: "Fiction"
 taxonomy: fiction
 permalink: /fiction/
