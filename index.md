@@ -9,7 +9,7 @@ classes: wide
   <h1 class="hero-title">Systems, tools, and the process of figuring things out.</h1>
   <p class="hero-sub">A running record of infrastructure builds, consulting work, and AI experiments — documented as I go. Some of it is useful. Some of it is just me thinking out loud.</p>
 <div class="hero-links">
-    <a href="/fiction/" class="hero-btn-primary">Read the fiction →</a>
+    <a href="/fiction/" class="hero-btn-primary">Read the thought experiment →</a>
   </div>
 </div>
 
