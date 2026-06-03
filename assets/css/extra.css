@@ -91,3 +91,7 @@ blockquote { font-style: italic; }
   padding-bottom: 0.6rem;
   margin-bottom: 1.5rem;
 }
+/* ── Hide the auto-generated "Recent Posts" label ── */
+.list__title {
+  display: none;
+}

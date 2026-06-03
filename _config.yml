@@ -77,8 +77,3 @@ defaults:
       author_profile: true   # ← changed from false — shows Archiles sidebar
       read_time: true        # ← enabled — gives a sense of post length at a glance
       show_date: true        # ← shows publish date under post title
-# ------------------------------------------------------------
-# Custom CSS
-# ------------------------------------------------------------
-head_scripts:
-  - /assets/css/extra.css
