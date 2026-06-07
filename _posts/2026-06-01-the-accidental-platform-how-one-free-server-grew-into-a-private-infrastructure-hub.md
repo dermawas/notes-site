@@ -60,6 +60,9 @@ This is the story of how that happened — and the one expensive mistake that ta
      (WebDAV)    (PostgreSQL)  (Apache)
 ```
 
+> 📄 **Full Technical Reference** — topology diagram, service stack, security design, and more:
+> [OCI VPN Hub — Technical Reference →](/oci-vpn-hub-public.html)
+
 All three populations — remote WireGuard peers, Site A LAN, Site B LAN — reach the same services using the same DNS names. No split DNS. No per-device configuration.
 
 ---
