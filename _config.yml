@@ -46,6 +46,15 @@ future: true   # allow posts with future timestamps to appear
 search: true
 
 # ------------------------------------------------------------
+# Analytics — GA4 via gtag.js (built-in Minimal Mistakes support)
+# ------------------------------------------------------------
+analytics:
+  provider: "google-gtag"
+  google:
+    tracking_id: "G-HXB4CHWE8J"
+    anonymize_ip: false
+
+# ------------------------------------------------------------
 # Pagination — limits homepage to 10 posts per page
 # Prevents the 30+ chapter dump from flooding the index
 # Requires jekyll-paginate plugin (GitHub Pages compatible)
