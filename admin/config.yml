@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: dermawas/notes-site
+  repo: dermawas/flowformlab-com-site
   branch: main
   base_url: https://ffl-oauth.vercel.app
   auth_endpoint: /api/auth
